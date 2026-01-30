@@ -1,59 +1,35 @@
-package frontend;
+package backend;
 
-import backend.CatalogService;
-import java.util.Scanner;
+public class Item {
+    private String id;
+    private String name;
+    private String description;
 
-public class Main {
-    public static void main(String[] args) {
+    public Item(String id, String name, String description) {
+        this.id = id;
+        this.name = name;
+        this.description = description;
+    }
 
-        Scanner scanner = new Scanner(System.in);
-        CatalogService service = new CatalogService();
+    public String getId() {
+        return id;
+    }
 
-        while (true) {
-            System.out.println("\n--- Catalog Menu ---");
-            System.out.println("1. View Items");
-            System.out.println("2. Add Items");
-            System.out.println("3. Edit Items");
-            System.out.println("4. Exit");
-            System.out.println("Please enter your choice: ");
+    public String getName() {
+        return name;
+    }
 
-            String choice = scanner.nextLine();
+    public String getDescription() {
+        return description;
+    }
 
-            switch (choice) {
-                case "1":
-                    service.showItems();
-                    break;
+    public void setName(String name) {
+        this.name = name;
+    }
 
-                case "2":
-                    System.out.print("Name: ");
-                    String name = scanner.nextLine();
-
-                    System.out.print("Description: ");
-                    String desc = scanner.nextLine();
-
-                    service.addItem(name, desc);
-                    break;
-
-                case "3":
-                    System.out.print("Enter ID: ");
-                    String ID = scanner.nextLine();
-
-                    System.out.print("New Name: ");
-                    String newName = scanner.nextLine();
-
-                    System.out.print("New Description: ");
-                    String newDesc = scanner.nextLine();
-
-                    service.editItem(ID, newName, newDesc);
-                    break;
-
-                case "4":
-                    System.out.println("GoodBye!");
-                    return;
-
-                default:
-                    System.out.println("Invalid. Please choose again");
-            }
-        }
+    public void setDescription(String description) {
+        this.description = description;
     }
 }
+
+
