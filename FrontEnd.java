@@ -2,13 +2,14 @@ package backend;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.nio.channels.ScatteringByteChannel;
 
 public class FrontEnd {
 
     private JFrame frame;
-    private CatalogService catalogService = new CatalogService();
+    private String[] gamesList = {"Game1", "game2", "Game3", "Game4", "Game 5", "Game 6", "Game 7", "Game 8", "Game 9", "Game 10", "Game 11", "Game 12", "Game 13", "Game 14"};
 
     public FrontEnd(){
         createLoginScreen();
@@ -43,18 +44,40 @@ public class FrontEnd {
         frame.getContentPane().removeAll();
         frame.setLayout(new BorderLayout());
 
+        frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
+
         JTextField searchbar = new JTextField("Search games...");
         frame.add(searchbar, BorderLayout.NORTH);
 
-        JTextArea catalogArea = new JTextArea();
-        catalogArea.setEditable(false);
+        JPanel gamesPanel = new JPanel();
+        int rows = (int) Math.ceil(gamesList.length / 3.0);
+        gamesPanel.setLayout(new GridLayout(rows, 3, 20, 20));
 
-        catalogArea.setText("game 1\n Game 2\n Game 3\n");
+//        DefaultListModel<String> gameModel = new DefaultListModel<>();
+        for (String game: gamesList){
+            JButton gameButton = new JButton(game);
+            gameButton.setFocusPainted(false);
+            gameButton.addActionListener(e -> openGame(game, isAdmin));
+            gamesPanel.add(gameButton);
+        }
 
-        frame.add(new JScrollPane(catalogArea), BorderLayout.CENTER);
+//        JList<String> list = new JList<>(gamesList);
+//        list.setFont(new Font("Arial", Font.PLAIN, 18));
+
+//        frame.add(new JScrollPane(list), BorderLayout.CENTER);
+
+//        JTextArea catalogArea = new JTextArea();
+//        catalogArea.setEditable(false);
+//
+//        catalogArea.setText("game 1\n Game 2\n Game 3\n");
+
+//        frame.add(new JScrollPane(catalogArea), BorderLayout.CENTER);
+
+        JScrollPane scrollPane = new JScrollPane(gamesPanel);
+        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+        frame.add(scrollPane, BorderLayout.CENTER);
 
         JPanel bottompanel = new JPanel();
-
         JButton logout = new JButton("Logout");
         bottompanel.add(logout);
 
@@ -73,6 +96,24 @@ public class FrontEnd {
             new FrontEnd();
         });
 
+
+        frame.revalidate();
+        frame.repaint();
+    }
+
+    private void openGame(String gameName, Boolean isAdmin){
+        frame.getContentPane().removeAll();
+        frame.setLayout(new BorderLayout());
+
+        JPanel empty = new JPanel();
+        frame.add(empty, BorderLayout.CENTER);
+
+        JButton back = new JButton("Back");
+        back.addActionListener(e -> openCatalog(isAdmin));
+
+        JPanel bot = new JPanel();
+        bot.add(back);
+        frame.add(bot, BorderLayout.SOUTH);
 
         frame.revalidate();
         frame.repaint();
