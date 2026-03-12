@@ -245,8 +245,6 @@ public class FrontEnd {
 //
 //        catalogArea.setText("game 1\n Game 2\n Game 3\n");
 
-//        frame.add(new JScrollPane(catalogArea), BorderLayout.CENTER);
-
         JScrollPane scrollPane = new JScrollPane(gamesPanel);
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
         frame.add(scrollPane, BorderLayout.CENTER);
