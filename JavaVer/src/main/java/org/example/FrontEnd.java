@@ -11,9 +11,12 @@ public class FrontEnd {
     private JFrame frame;
     private int[] gamesList = {730, 570, 440, 578080, 1091500, 1172470, 271590, 252490, 413150, 550, 620980};
     private JPanel gamesPanel;
+    private String currentUser; // stores logged in username
+
     public FrontEnd(){
         createLoginScreen();
     }
+
     private void createLoginScreen() {
         frame = new JFrame("CLOUD5 Game Store");
         frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
@@ -27,7 +30,6 @@ public class FrontEnd {
         JPanel centerPanel = new JPanel(new GridBagLayout());
 
         JPanel loginPanel = new JPanel();
-
         loginPanel.setLayout(new GridLayout(5, 1, 10, 10));
         loginPanel.setPreferredSize(new Dimension(300, 200));
 
@@ -58,48 +60,29 @@ public class FrontEnd {
             String role = auth.login(username, password);
 
             if (role.equals("admin")) {
+                currentUser = username; // save username
                 openCatalog(true);
             } else if (role.equals("user")) {
+                currentUser = username; // save username
                 openCatalog(false);
             } else {
                 JOptionPane.showMessageDialog(frame, "Invalid Username or Password");
             }
         });
 
-//        JPanel panel = new JPanel();
-//        panel.setLayout(new GridLayout(4,1));
-//
-//        JLabel label = new JLabel("Select Login", SwingConstants.CENTER);
-//        JButton adminButton = new JButton("Login as Admin");
-//        JButton userButton = new JButton("Login as User");
-//
-//        panel.add(label);
-//        panel.add(adminButton);
-//        panel.add(userButton);
-//
-//        frame.add(panel);
         frame.setVisible(true);
-//
-//        adminButton.addActionListener(e -> openCatalog(true));
-//        userButton.addActionListener(e -> openCatalog(false));
-
     }
 
     private void openCatalog(boolean isAdmin) {
         frame.getContentPane().removeAll();
         frame.setLayout(new BorderLayout());
-
         frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
-
-//        JTextField searchbar = new JTextField("Search games...");
-//        frame.add(searchbar, BorderLayout.NORTH);
 
         JPanel header = new JPanel(new BorderLayout());
         header.setBackground(new Color(18, 18, 18));
-        header.setBorder(BorderFactory.createEmptyBorder(10,20,10,20));
+        header.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
 
         JLabel logo = new JLabel("CLOUD5");
-
         logo.setForeground(Color.WHITE);
         logo.setFont(new Font("Arial", Font.BOLD, 28));
         header.add(logo, BorderLayout.WEST);
@@ -110,7 +93,7 @@ public class FrontEnd {
         searchbar.setBackground(new Color(40, 40, 40));
         searchbar.setForeground(Color.WHITE);
         searchbar.setCaretColor(Color.WHITE);
-        header.setBorder(BorderFactory.createEmptyBorder(10, 10,10, 10));
+        header.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
         JPanel searchPanel = new JPanel();
         searchPanel.setBackground(new Color(18, 18, 18));
@@ -150,10 +133,16 @@ public class FrontEnd {
                 return false;
             }
         });
+
         JPanel rightpanel = new JPanel();
-        rightpanel.setBackground(new Color(18,18,18));
+        rightpanel.setBackground(new Color(18, 18, 18));
 
         JButton cartButton = new JButton("Cart");
+        cartButton.addActionListener(e -> {
+            WishlistService ws = new WishlistService();
+            String cartContents = ws.getWishlist(currentUser);
+            JOptionPane.showMessageDialog(frame, cartContents, "My Cart", JOptionPane.INFORMATION_MESSAGE);
+        });
         rightpanel.add(cartButton);
 
         if (isAdmin) {
@@ -178,7 +167,6 @@ public class FrontEnd {
                 };
 
                 int result = JOptionPane.showConfirmDialog(frame, fields, "Add Game", JOptionPane.OK_CANCEL_OPTION);
-
                 if (result == JOptionPane.OK_OPTION) {
                     GameService gs = new GameService();
                     boolean success = gs.addGame(
@@ -213,6 +201,7 @@ public class FrontEnd {
             rightpanel.add(add);
             rightpanel.add(remove);
         }
+
         header.add(rightpanel, BorderLayout.EAST);
         frame.add(header, BorderLayout.NORTH);
 
@@ -223,15 +212,13 @@ public class FrontEnd {
         gamesPanel.setLayout(new GridLayout(rows, 3, 25, 25));
         gamesPanel.setBorder(BorderFactory.createEmptyBorder(30, 30, 30, 30));
 
-        for (int appID : gamesList){
-            try{
+        for (int appID : gamesList) {
+            try {
                 String urlString = "https://store.steampowered.com/api/appdetails?appids=" + appID;
                 URL url = new URL(urlString);
                 BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream()));
-
                 StringBuilder result = new StringBuilder();
                 String line;
-
                 while ((line = reader.readLine()) != null) {
                     result.append(line);
                 }
@@ -253,7 +240,7 @@ public class FrontEnd {
                 JPanel card = new JPanel(new BorderLayout());
                 card.setBackground(new Color(35, 35, 35));
                 card.setPreferredSize(new Dimension(460, 330));
-                card.setBorder(BorderFactory.createEmptyBorder(5,5,5,5));
+                card.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
                 JLabel image = new JLabel(new ImageIcon(new URL(imageURL)));
                 card.add(image, BorderLayout.NORTH);
 
@@ -263,28 +250,28 @@ public class FrontEnd {
 
                 JLabel platformTag = new JLabel(platform);
                 platformTag.setOpaque(true);
-                platformTag.setBackground(new Color(80,80,80));
+                platformTag.setBackground(new Color(80, 80, 80));
                 platformTag.setForeground(Color.WHITE);
-                platformTag.setBorder(BorderFactory.createEmptyBorder(2,6,2,6));
+                platformTag.setBorder(BorderFactory.createEmptyBorder(2, 6, 2, 6));
 
                 JLabel hashtags = new JLabel("#Genre #Genre");
-                hashtags.setForeground(new Color(255,120,120));
+                hashtags.setForeground(new Color(255, 120, 120));
 
                 JPanel infoPanel = new JPanel();
                 infoPanel.setLayout(new BoxLayout(infoPanel, BoxLayout.Y_AXIS));
                 infoPanel.setBackground(new Color(35, 35, 35));
-                infoPanel.setBorder(BorderFactory.createEmptyBorder(8,8,8,8));
+                infoPanel.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
 
                 JTextArea desc = new JTextArea(description);
                 desc.setLineWrap(true);
                 desc.setWrapStyleWord(true);
                 desc.setEditable(false);
                 desc.setForeground(Color.LIGHT_GRAY);
-                desc.setBackground(new Color(35,35,35));
+                desc.setBackground(new Color(35, 35, 35));
                 desc.setRows(3);
 
                 JPanel titleRow = new JPanel(new BorderLayout());
-                titleRow.setBackground(new Color(35,35,35));
+                titleRow.setBackground(new Color(35, 35, 35));
                 titleRow.add(title, BorderLayout.WEST);
                 titleRow.add(platformTag, BorderLayout.EAST);
 
@@ -295,7 +282,7 @@ public class FrontEnd {
 
                 card.addMouseListener(new java.awt.event.MouseAdapter() {
                     public void mouseClicked(java.awt.event.MouseEvent e) {
-                        openGame(appID, isAdmin);
+                        openGame(appID, name, isAdmin);
                     }
                 });
 
@@ -306,30 +293,6 @@ public class FrontEnd {
             }
         }
 
-//                String imageURL = "https://cdn.cloudflare.steamstatic.com/steam/apps/" + appID + "/header.jpg";
-//                ImageIcon icon = new ImageIcon(new URL(imageURL));
-//                JButton gameButton = new JButton(icon);
-//                gameButton.setBorder(BorderFactory.createEmptyBorder());
-//                gameButton.setContentAreaFilled(false);
-//                gameButton.setFocusPainted(false);
-//                gameButton.setPreferredSize(new Dimension(460, 215));
-//                gameButton.addActionListener(e -> openGame(appID, isAdmin));
-//                gamesPanel.add(gameButton);
-//            }catch(Exception e){
-//                e.printStackTrace();
-//            }
-//        }
-
-//        JList<String> list = new JList<>(gamesList);
-//        list.setFont(new Font("Arial", Font.PLAIN, 18));
-
-//        frame.add(new JScrollPane(list), BorderLayout.CENTER);
-
-//        JTextArea catalogArea = new JTextArea();
-//        catalogArea.setEditable(false);
-//
-//        catalogArea.setText("game 1\n Game 2\n Game 3\n");
-
         JScrollPane scrollPane = new JScrollPane(gamesPanel);
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
         frame.add(scrollPane, BorderLayout.CENTER);
@@ -337,15 +300,6 @@ public class FrontEnd {
         JPanel bottompanel = new JPanel();
         JButton logout = new JButton("Logout");
         bottompanel.add(logout);
-
-//        if (isAdmin) {
-//            JButton add = new JButton("Add game");
-//            JButton remove = new JButton("Remove game");
-//
-//            bottompanel.add(add);
-//            bottompanel.add(remove);
-//        }
-
         frame.add(bottompanel, BorderLayout.SOUTH);
 
         logout.addActionListener(e -> {
@@ -353,33 +307,28 @@ public class FrontEnd {
             new FrontEnd();
         });
 
-
         frame.revalidate();
         frame.repaint();
     }
 
-    private void openGame(int appID, Boolean isAdmin){
+    private void openGame(int appID, String gameName, Boolean isAdmin) {
         frame.getContentPane().removeAll();
         frame.setLayout(new BorderLayout());
 
-//        JPanel empty = new JPanel();
-//        frame.add(empty, BorderLayout.CENTER);
-        try{
+        try {
             String urlString = "https://store.steampowered.com/api/appdetails?appids=" + appID;
             URL url = new URL(urlString);
             BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream()));
             StringBuilder result = new StringBuilder();
             String line;
-
-            while((line = reader.readLine()) != null){
+            while ((line = reader.readLine()) != null) {
                 result.append(line);
             }
             reader.close();
-            JSONObject json = new JSONObject(result.toString());
 
+            JSONObject json = new JSONObject(result.toString());
             JSONObject game = json.getJSONObject(String.valueOf(appID)).getJSONObject("data");
             String description = game.getString("short_description");
-
             String imageURL = game.getString("header_image");
 
             ImageIcon icon = new ImageIcon(new URL(imageURL));
@@ -395,7 +344,8 @@ public class FrontEnd {
             text.setEditable(false);
             frame.add(image, BorderLayout.NORTH);
             frame.add(new JScrollPane(text), BorderLayout.CENTER);
-        } catch(Exception e){
+
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
@@ -404,8 +354,22 @@ public class FrontEnd {
 
         JPanel bot = new JPanel();
         bot.add(back);
-        frame.add(bot, BorderLayout.SOUTH);
 
+        if (!isAdmin) {
+            JButton addToCart = new JButton("Add to Cart");
+            addToCart.addActionListener(e -> {
+                WishlistService ws = new WishlistService();
+                boolean success = ws.addToWishlist(currentUser, appID, gameName);
+                if (success) {
+                    JOptionPane.showMessageDialog(frame, gameName + " added to cart!");
+                } else {
+                    JOptionPane.showMessageDialog(frame, gameName + " is already in your cart!");
+                }
+            });
+            bot.add(addToCart);
+        }
+
+        frame.add(bot, BorderLayout.SOUTH);
         frame.revalidate();
         frame.repaint();
     }
