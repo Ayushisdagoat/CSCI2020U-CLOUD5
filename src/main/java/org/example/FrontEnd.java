@@ -7,21 +7,28 @@ import java.io.InputStreamReader;
 import org.json.JSONObject;
 public class FrontEnd {
 
+    //Main Window
     private JFrame frame;
+    //List of Steam ID games
     private int[] gamesList = {730, 570, 440, 578080, 1091500, 1172470, 271590, 252490, 413150, 550, 620980, 2651280};
     private JPanel gamesPanel;
     private String currentUser;
+    //Constructor
     public FrontEnd(){
         createLoginScreen();
     }
+
     private void createLoginScreen() {
 
+        //Creates Login Screen
         frame = new JFrame("CLOUD5 Game Store");
         frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setLayout(new BorderLayout());
+        //Dark Theme
         frame.getContentPane().setBackground(new Color(25,25,25));
 
+        //Logo + Title
         JLabel logo = new JLabel("CLOUD5", SwingConstants.CENTER);
         logo.setFont(new Font("Arial", Font.BOLD, 56));
         logo.setForeground(Color.WHITE);
@@ -31,6 +38,7 @@ public class FrontEnd {
         JPanel centerPanel = new JPanel(new GridBagLayout());
         centerPanel.setBackground(new Color(25,25,25));
 
+        //Login Panel
         JPanel loginPanel = new JPanel();
         loginPanel.setLayout(new GridLayout(6,1,10,10));
         loginPanel.setPreferredSize(new Dimension(350,280));
@@ -41,16 +49,19 @@ public class FrontEnd {
         loginLabel.setFont(new Font("Arial", Font.BOLD, 24));
         loginLabel.setForeground(Color.WHITE);
 
+        //Username Input
         JTextField usernameField = new JTextField();
         usernameField.setBackground(new Color(60,60,60));
         usernameField.setForeground(Color.WHITE);
         usernameField.setCaretColor(Color.WHITE);
 
+        //Password Input
         JPasswordField passwordField = new JPasswordField();
         passwordField.setBackground(new Color(60,60,60));
         passwordField.setForeground(Color.WHITE);
         passwordField.setCaretColor(Color.WHITE);
 
+        //Login button
         JButton loginButton = new JButton("Login");
         loginButton.setBackground(new Color(70,130,180));
         loginButton.setForeground(Color.WHITE);
@@ -62,6 +73,7 @@ public class FrontEnd {
         JLabel passLabel = new JLabel("Password");
         passLabel.setForeground(Color.LIGHT_GRAY);
 
+        //Add everything
         loginPanel.add(loginLabel);
         loginPanel.add(userLabel);
         loginPanel.add(usernameField);
@@ -73,6 +85,7 @@ public class FrontEnd {
 
         frame.add(centerPanel, BorderLayout.CENTER);
 
+        //Login logic
         loginButton.addActionListener(e -> {
             String username = usernameField.getText();
             String password = new String(passwordField.getPassword());
@@ -93,12 +106,13 @@ public class FrontEnd {
         frame.setVisible(true);
     }
 
+    //Main catalog page
     private void openCatalog(boolean isAdmin) {
         frame.getContentPane().removeAll();
         frame.setLayout(new BorderLayout());
 
         frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
-
+        //Top Header
         JPanel header = new JPanel(new BorderLayout());
         header.setBackground(new Color(18, 18, 18));
         header.setBorder(BorderFactory.createEmptyBorder(10,20,10,20));
@@ -109,6 +123,7 @@ public class FrontEnd {
         logo.setFont(new Font("Arial", Font.BOLD, 28));
         header.add(logo, BorderLayout.WEST);
 
+        //Search bar
         JTextField searchbar = new JTextField();
         searchbar.setPreferredSize(new Dimension(500, 40));
         searchbar.setFont(new Font("Arial", Font.PLAIN, 28));
@@ -122,6 +137,7 @@ public class FrontEnd {
         searchPanel.add(searchbar);
         header.add(searchPanel, BorderLayout.CENTER);
 
+        //Search filter
         searchbar.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
             public void insertUpdate(javax.swing.event.DocumentEvent e) { filterGames(); }
             public void removeUpdate(javax.swing.event.DocumentEvent e) { filterGames(); }
@@ -155,9 +171,10 @@ public class FrontEnd {
                 return false;
             }
         });
+        //Cart + add remove
         JPanel rightpanel = new JPanel();
         rightpanel.setBackground(new Color(18,18,18));
-
+        //Cart button
         JButton cartButton = new JButton("Cart");
         cartButton.addActionListener(e -> {
             WishlistService ws = new WishlistService();
@@ -171,11 +188,11 @@ public class FrontEnd {
             );
         });
         rightpanel.add(cartButton);
-
+        //Admin only
         if (isAdmin) {
             JButton add = new JButton("Add Game");
             JButton remove = new JButton("Remove Game");
-
+            //Add game logic
             add.addActionListener(e -> {
                 JTextField titleField = new JTextField();
                 JTextField genreField = new JTextField();
@@ -212,7 +229,7 @@ public class FrontEnd {
                     }
                 }
             });
-
+            //Remove game logic
             remove.addActionListener(e -> {
                 String input = JOptionPane.showInputDialog(frame, "Enter the ID of the game to remove:");
                 if (input != null) {
@@ -235,10 +252,12 @@ public class FrontEnd {
         gamesPanel = new JPanel();
         gamesPanel.setBackground(new Color(25, 25, 25));
         frame.getContentPane().setBackground(new Color(25, 25, 25));
+        //Grid layout for games
         int rows = (int) Math.ceil(gamesList.length / 3.0);
         gamesPanel.setLayout(new GridLayout(rows, 3, 25, 25));
         gamesPanel.setBorder(BorderFactory.createEmptyBorder(30, 30, 30, 30));
 
+        //Game data from Steam
         for (int appID : gamesList){
             try{
                 String urlString = "https://store.steampowered.com/api/appdetails?appids=" + appID;
@@ -260,19 +279,23 @@ public class FrontEnd {
                 String description = game.getString("short_description");
                 String imageURL = game.getString("header_image");
 
+                //Platform detection
                 String platform = "WEB";
                 JSONObject platforms = game.getJSONObject("platforms");
                 if (platforms.getBoolean("windows")) platform = "Windows";
                 else if (platforms.getBoolean("mac")) platform = "Mac";
                 else if (platforms.getBoolean("linux")) platform = "Linux";
 
+                //Card panel
                 JPanel card = new JPanel(new BorderLayout());
                 card.setBackground(new Color(35, 35, 35));
                 card.setPreferredSize(new Dimension(460, 330));
                 card.setBorder(BorderFactory.createEmptyBorder(5,5,5,5));
+                //Game image
                 JLabel image = new JLabel(new ImageIcon(new URL(imageURL)));
                 card.add(image, BorderLayout.NORTH);
 
+                //Title of game
                 JLabel title = new JLabel(name);
                 title.setFont(new Font("Arial", Font.BOLD, 16));
                 title.setForeground(Color.WHITE);
@@ -309,6 +332,7 @@ public class FrontEnd {
                 infoPanel.add(desc);
                 card.add(infoPanel, BorderLayout.CENTER);
 
+                //Click top open game
                 card.addMouseListener(new java.awt.event.MouseAdapter() {
                     public void mouseClicked(java.awt.event.MouseEvent e) {
                         openGame(appID, name, isAdmin);
@@ -322,16 +346,21 @@ public class FrontEnd {
             }
         }
 
+        //Scroll wheel
         JScrollPane scrollPane = new JScrollPane(gamesPanel);
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+        scrollPane.getVerticalScrollBar().setUnitIncrement(20);
         frame.add(scrollPane, BorderLayout.CENTER);
 
+        //Logout bar plus button
         JPanel bottompanel = new JPanel();
         JButton logout = new JButton("Logout");
+        bottompanel.setBackground(new Color(18, 18, 18));
         bottompanel.add(logout);
 
         frame.add(bottompanel, BorderLayout.SOUTH);
 
+        //Logout action
         logout.addActionListener(e -> {
             frame.dispose();
             new FrontEnd();
@@ -342,29 +371,36 @@ public class FrontEnd {
         frame.repaint();
     }
 
+    //Open game
     private void openGame(int appID, String gameName, Boolean isAdmin){
+        //Clear frame
         frame.getContentPane().removeAll();
         frame.setLayout(new BorderLayout());
         frame.getContentPane().setBackground(new Color(18, 18, 18));
 
         try{
+            //Steam API using link
             String urlString = "https://store.steampowered.com/api/appdetails?appids=" + appID;
             URL url = new URL(urlString);
             BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream()));
             StringBuilder result = new StringBuilder();
             String line;
 
+            //Read entire JSON esponse from API
             while((line = reader.readLine()) != null){
                 result.append(line);
             }
             reader.close();
-
+            //Convert API response intoJSON
             JSONObject json = new JSONObject(result.toString());
+            //Access game data
             JSONObject game = json.getJSONObject(String.valueOf(appID)).getJSONObject("data");
+            //Get game info
             String description = game.getString("short_description");
             String name = game.getString("name");
             String imageURL = game.getString("header_image");
 
+            //Game title at top
             JLabel title = new JLabel(name);
             title.setForeground(Color.WHITE);
             title.setFont(new Font("Arial", Font.BOLD, 32));
@@ -375,7 +411,7 @@ public class FrontEnd {
             JPanel mainpanel = new JPanel(new BorderLayout());
             mainpanel.setBackground(new Color(18, 18, 18));
             mainpanel.setBorder(BorderFactory.createEmptyBorder(20,30, 20, 30));
-
+            //Trailer placeholder
             JPanel leftPanel = new JPanel();
             leftPanel.setPreferredSize(new Dimension(900,500));
             leftPanel.setBackground(new Color(10,10,10));
@@ -389,13 +425,13 @@ public class FrontEnd {
             leftPanel.add(placeholder, BorderLayout.CENTER);
 
             mainpanel.add(leftPanel, BorderLayout.CENTER);
-
+            //Game info
             JPanel rightPanel = new JPanel();
             rightPanel.setLayout(new BoxLayout(rightPanel, BoxLayout.Y_AXIS));
             rightPanel.setPreferredSize(new Dimension(400,500));
             rightPanel.setBackground(new Color(30,30,30));
             rightPanel.setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
-
+            //Game image from steam
             ImageIcon icon = new ImageIcon(new URL(imageURL));
             Image scaled = icon.getImage().getScaledInstance(380,180,Image.SCALE_SMOOTH);
 
@@ -432,6 +468,7 @@ public class FrontEnd {
         bot.setBackground(new Color(18,18,18));
         bot.add(back);
 
+        //Only users can add games to cart
         if (!isAdmin) {
             JButton addToCart = new JButton("Add to Cart");
             addToCart.addActionListener(e -> {
