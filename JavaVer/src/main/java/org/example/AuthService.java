@@ -1,58 +1,66 @@
 package org.example;
 
-import java.sql.*;
+import java.util.ArrayList;
 
 public class AuthService {
 
-    private static final String DB_URL = "jdbc:sqlite:game_catalogue.db";
+    private static ArrayList<String> usernames = new ArrayList<>();
+    private static ArrayList<String> passwords = new ArrayList<>();
+    private static ArrayList<String> roles = new ArrayList<>();
 
     public static void initDB() {
-        try (Connection conn = DriverManager.getConnection(DB_URL);
-             Statement stmt = conn.createStatement()) {
+        usernames.add("admin");
+        passwords.add("admin123");
+        roles.add("admin");
 
-            stmt.execute("""
-                CREATE TABLE IF NOT EXISTS users (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    username TEXT NOT NULL UNIQUE,
-                    password TEXT NOT NULL,
-                    role TEXT NOT NULL CHECK(role IN ('admin', 'user'))
-                )
-            """);
+        usernames.add("user");
+        passwords.add("user123");
+        roles.add("user");
 
-            stmt.execute("""
-                INSERT OR IGNORE INTO users (username, password, role)
-                VALUES ('admin', 'admin123', 'admin')
-            """);
-
-            stmt.execute("""
-                INSERT OR IGNORE INTO users (username, password, role)
-                VALUES ('user', 'user123', 'user')
-            """);
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+        System.out.println("Default users created.");
     }
 
     public String login(String username, String password) {
-        String query = "SELECT role FROM users WHERE username = ? AND password = ?";
-
-        try (Connection conn = DriverManager.getConnection(DB_URL);
-             PreparedStatement stmt = conn.prepareStatement(query)) {
-
-            stmt.setString(1, username);
-            stmt.setString(2, password);
-
-            ResultSet rs = stmt.executeQuery();
-
-            if (rs.next()) {
-                return rs.getString("role");
+        for (int i = 0; i < usernames.size(); i++) {
+            if (usernames.get(i).equals(username) && passwords.get(i).equals(password)) {
+                return roles.get(i);
             }
-
-        } catch (SQLException e) {
-            e.printStackTrace();
         }
-
         return "invalid";
+    }
+
+    public static void addUser(String username, String password, String role) {
+        usernames.add(username);
+        passwords.add(password);
+        roles.add(role);
+    }
+
+    public static boolean userExists(String username) {
+        return usernames.contains(username);
+    }
+
+    public static void removeUser(String username) {
+        int index = usernames.indexOf(username);
+        if (index != -1) {
+            usernames.remove(index);
+            passwords.remove(index);
+            roles.remove(index);
+        }
+    }
+
+    public static void changePassword(String username, String newPassword) {
+        int index = usernames.indexOf(username);
+        if (index != -1) {
+            passwords.set(index, newPassword);
+        }
+    }
+
+    public static String getAllUsers() {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < usernames.size(); i++) {
+            sb.append("Username: ").append(usernames.get(i))
+                    .append(" | Role: ").append(roles.get(i)).append("\n");
+        }
+        return sb.toString();
     }
 }

@@ -1,113 +1,106 @@
 package org.example;
 
-import java.sql.*;
+import java.util.ArrayList;
 
 public class GameService {
 
-    private static final String DB_URL = "jdbc:sqlite:game_catalogue.db";
+    private static ArrayList<Integer> ids = new ArrayList<>();
+    private static ArrayList<String> titles = new ArrayList<>();
+    private static ArrayList<String> genres = new ArrayList<>();
+    private static ArrayList<String> platforms = new ArrayList<>();
+    private static ArrayList<Double> prices = new ArrayList<>();
+    private static ArrayList<String> descriptions = new ArrayList<>();
+    private static ArrayList<String> trailerUrls = new ArrayList<>();
+    private static ArrayList<Double> averageRatings = new ArrayList<>();
+    private static int nextId = 1;
 
     public static void initDB() {
-        try (Connection conn = DriverManager.getConnection(DB_URL);
-             Statement stmt = conn.createStatement()) {
-
-            stmt.execute("""
-                CREATE TABLE IF NOT EXISTS games (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    title TEXT NOT NULL,
-                    genre TEXT,
-                    platform TEXT,
-                    price REAL DEFAULT 0.0,
-                    description TEXT,
-                    trailer_url TEXT,
-                    average_rating REAL DEFAULT 0.0
-                )
-            """);
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+        System.out.println("GameService ready.");
     }
 
     public boolean addGame(String title, String genre, String platform, double price, String description, String trailerUrl) {
-        String query = "INSERT INTO games (title, genre, platform, price, description, trailer_url) VALUES (?, ?, ?, ?, ?, ?)";
-
-        try (Connection conn = DriverManager.getConnection(DB_URL);
-             PreparedStatement stmt = conn.prepareStatement(query)) {
-
-            stmt.setString(1, title);
-            stmt.setString(2, genre);
-            stmt.setString(3, platform);
-            stmt.setDouble(4, price);
-            stmt.setString(5, description);
-            stmt.setString(6, trailerUrl);
-            stmt.executeUpdate();
-            return true;
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
-        }
+        ids.add(nextId++);
+        titles.add(title);
+        genres.add(genre);
+        platforms.add(platform);
+        prices.add(price);
+        descriptions.add(description);
+        trailerUrls.add(trailerUrl);
+        averageRatings.add(0.0);
+        return true;
     }
 
     public boolean editGame(int id, String title, String genre, String platform, double price, String description, String trailerUrl) {
-        String query = "UPDATE games SET title = ?, genre = ?, platform = ?, price = ?, description = ?, trailer_url = ? WHERE id = ?";
+        int index = ids.indexOf(id);
+        if (index == -1) return false;
 
-        try (Connection conn = DriverManager.getConnection(DB_URL);
-             PreparedStatement stmt = conn.prepareStatement(query)) {
-
-            stmt.setString(1, title);
-            stmt.setString(2, genre);
-            stmt.setString(3, platform);
-            stmt.setDouble(4, price);
-            stmt.setString(5, description);
-            stmt.setString(6, trailerUrl);
-            stmt.setInt(7, id);
-            stmt.executeUpdate();
-            return true;
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
-        }
+        titles.set(index, title);
+        genres.set(index, genre);
+        platforms.set(index, platform);
+        prices.set(index, price);
+        descriptions.set(index, description);
+        trailerUrls.set(index, trailerUrl);
+        return true;
     }
 
     public boolean removeGame(int id) {
-        String query = "DELETE FROM games WHERE id = ?";
+        int index = ids.indexOf(id);
+        if (index == -1) return false;
 
-        try (Connection conn = DriverManager.getConnection(DB_URL);
-             PreparedStatement stmt = conn.prepareStatement(query)) {
+        ids.remove(index);
+        titles.remove(index);
+        genres.remove(index);
+        platforms.remove(index);
+        prices.remove(index);
+        descriptions.remove(index);
+        trailerUrls.remove(index);
+        averageRatings.remove(index);
+        return true;
+    }
 
-            stmt.setInt(1, id);
-            stmt.executeUpdate();
-            return true;
+    public String getAllGames() {
+        if (ids.isEmpty()) return "No games in catalogue.";
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < ids.size(); i++) {
+            sb.append("ID: ").append(ids.get(i))
+                    .append(" | Title: ").append(titles.get(i))
+                    .append(" | Genre: ").append(genres.get(i))
+                    .append(" | Platform: ").append(platforms.get(i))
+                    .append(" | Price: $").append(prices.get(i))
+                    .append(" | Rating: ").append(averageRatings.get(i))
+                    .append("\n");
+        }
+        return sb.toString();
+    }
 
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
+    public int getIndexById(int id) {
+        return ids.indexOf(id);
+    }
+
+    public int getId(int index) {
+        return ids.get(index); }
+    public String getTitle(int index) {
+        return titles.get(index); }
+    public String getGenre(int index) {
+        return genres.get(index); }
+    public String getPlatform(int index) {
+        return platforms.get(index); }
+    public double getPrice(int index) {
+        return prices.get(index); }
+    public String getDescription(int index) {
+        return descriptions.get(index); }
+    public String getTrailerUrl(int index) {
+        return trailerUrls.get(index); }
+    public double getAverageRating(int index) {
+        return averageRatings.get(index); }
+    public int getSize() { return ids.size(); }
+
+    public void updateAverageRating(int id, double rating) {
+        int index = ids.indexOf(id);
+        if (index != -1) {
+            averageRatings.set(index, rating);
         }
     }
 
-    public ResultSet getAllGames() {
-        try {
-            Connection conn = DriverManager.getConnection(DB_URL);
-            Statement stmt = conn.createStatement();
-            return stmt.executeQuery("SELECT * FROM games ORDER BY title ASC");
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
-
-    public ResultSet getGameById(int id) {
-        String query = "SELECT * FROM games WHERE id = ?";
-        try {
-            Connection conn = DriverManager.getConnection(DB_URL);
-            PreparedStatement stmt = conn.prepareStatement(query);
-            stmt.setInt(1, id);
-            return stmt.executeQuery();
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
+    public ArrayList<Integer> getAllIds() { return ids; }
 }

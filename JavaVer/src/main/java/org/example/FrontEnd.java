@@ -410,10 +410,11 @@ public class FrontEnd {
         frame.repaint();
     }
 
-    public static void main(String[] args){
+    public static void main(String[] args) {
         AuthService.initDB();
         GameService.initDB();
         ReviewService.initDB();
+        WishlistService.initDB();
         SwingUtilities.invokeLater(FrontEnd::new);
     }
 }
