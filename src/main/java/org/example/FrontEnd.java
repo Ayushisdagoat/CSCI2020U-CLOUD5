@@ -505,6 +505,9 @@ public class FrontEnd {
         GameService.initDB();
         ReviewService.initDB();
         WishlistService.initDB();
+        GenreService.initDB();
         SwingUtilities.invokeLater(FrontEnd::new);
+
     }
+
 }
