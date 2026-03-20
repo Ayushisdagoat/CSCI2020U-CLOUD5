@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>CLOUD5 Game Store</title>
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet"/>
+</head>
+<body>
+
+<div id="login-screen" class="screen active">
+    <div class="login-logo">CLOUD5</div>
+    <div class="login-box">
+        <h2>Login</h2>
+        <div><label>Username</label><input id="inp-user" type="text" autocomplete="off"/></div>
+        <div><label>Password</label><input id="inp-pass" type="password"/></div>
+        <div id="login-error">Invalid Username or Password</div>
+        <button class="btn btn-primary" onclick="doLogin()">Login</button>
+    </div>
+</div>
+
+<div id="catalog-screen" class="screen">
+    <div class="header">
+        <div class="header-logo">CLOUD5</div>
+        <input type="text" id="search-bar" placeholder="Search games…" oninput="filterCatalog()"/>
+        <div class="header-right" id="header-right"></div>
+    </div>
+    <div class="catalog-body" id="catalog-body">
+        <div class="search-results" id="search-results"></div>
+    </div>
+    <div class="footer-bar">
+        <button class="btn btn-ghost" onclick="doLogout()">Logout</button>
+    </div>
+</div>
+
+<div id="game-screen" class="screen">
+    <div class="game-title-bar" id="game-title-bar"></div>
+    <div class="game-body">
+        <div class="game-left" id="game-left">Loading…</div>
+        <div class="game-right" id="game-right"></div>
+    </div>
+    <div class="game-footer" id="game-footer"></div>
+</div>
+
+<div class="modal-overlay hidden" id="modal-overlay">
+    <div class="modal" id="modal-box"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+    const style = document.createElement('style');
+        style.textContent = `
+          :root {
+            --bg:      #191919;
+            --bg2:     #121212;
+            --bg3:     #232323;
+            --card:    #232323;
+            --border:  #2e2e2e;
+            --text:    #f0f0f0;
+            --muted:   #999;
+            --accent:  #4682B4;
+            --accent2: #ff7878;
+            --inp:     #3c3c3c;
+          }
+          * { box-sizing: border-box; margin: 0; padding: 0; }
+          body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; min-height: 100vh; }
+          .screen { display: none; }
+          .screen.active { display: flex; flex-direction: column; min-height: 100vh; }
+          #login-screen { align-items: center; justify-content: center; }
+          .login-logo { font-family: 'Arial', sans-serif; font-size: 3.5rem; font-weight: 700; letter-spacing: 4px; color: #fff; margin-bottom: 2rem; text-align: center; }
+          .login-box { background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 2rem; width: 340px; display: flex; flex-direction: column; gap: 1rem; }
+          .login-box h2 { text-align: center; font-size: 1.3rem; font-weight: 500; }
+          .login-box label { font-size: 0.8rem; color: var(--muted); margin-bottom: 2px; display: block; }
+          .login-box input { width: 100%; background: var(--inp); border: 1px solid var(--border); border-radius: 4px; padding: 8px 10px; color: var(--text); font-size: 0.95rem; outline: none; }
+          .login-box input:focus { border-color: var(--accent); }
+          #login-error { color: var(--accent2); font-size: 0.82rem; text-align: center; display: none; }
+          .btn { border: none; border-radius: 4px; padding: 8px 16px; cursor: pointer; font-family: 'Inter', sans-serif; font-size: 0.88rem; font-weight: 500; transition: opacity .15s; }
+          .btn:hover { opacity: .85; }
+          .btn:disabled { opacity: .45; cursor: default; }
+          .btn-primary { background: var(--accent); color: #fff; }
+          .btn-danger { background: #c0392b; color: #fff; }
+          .btn-ghost { background: var(--bg3); color: var(--text); border: 1px solid var(--border); }
+          .header { background: var(--bg2); padding: 10px 20px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+          .header-logo { font-family: 'Rajdhani', sans-serif; font-size: 1.6rem; font-weight: 700; letter-spacing: 2px; color: #fff; white-space: nowrap; }
+          .header input[type=text] { flex: 1; max-width: 500px; background: var(--inp); border: 1px solid var(--border); border-radius: 4px; padding: 8px 12px; color: var(--text); font-size: 1rem; outline: none; }
+          .header input[type=text]:focus { border-color: var(--accent); }
+          .header-right { display: flex; gap: 8px; margin-left: auto; }
+          #catalog-screen { background: var(--bg); }
+          .catalog-body { flex: 1; overflow-y: auto; padding: 24px 28px; display: flex; flex-direction: column; gap: 36px; }
+          .genre-section { display: block; }
+          .genre-heading { font-family: 'Rajdhani', sans-serif; font-size: 1.3rem; font-weight: 700; letter-spacing: 1px; color: var(--text); margin-bottom: 14px; padding-bottom: 6px; border-bottom: 2px solid var(--accent); display: inline-block; }
+          .genre-row { display: flex; gap: 16px; overflow-x: auto; padding-bottom: 8px; }
+          .genre-row::-webkit-scrollbar { height: 4px; }
+          .genre-row::-webkit-scrollbar-track { background: var(--bg2); }
+          .genre-row::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+          .game-card { background: var(--card); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; cursor: pointer; transition: transform .15s, border-color .15s; flex-shrink: 0; width: 240px; }
+          .game-card:hover { transform: translateY(-3px); border-color: var(--accent); }
+          .game-card img { width: 100%; display: block; height: 112px; object-fit: cover; }
+          .card-info { padding: 9px 11px 11px; }
+          .card-title-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; gap: 6px; }
+          .card-title { font-weight: 600; font-size: 0.88rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+          .platform-tag { background: var(--bg); color: var(--muted); font-size: 0.66rem; padding: 2px 6px; border-radius: 3px; border: 1px solid var(--border); flex-shrink: 0; }
+          .card-tags { color: var(--accent2); font-size: 0.72rem; margin-bottom: 5px; }
+          .card-desc { color: var(--muted); font-size: 0.75rem; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+          .search-results { display: none; grid-template-columns: repeat(4,1fr); gap: 16px; }
+          .search-results.active { display: grid; }
+          .search-results .game-card { width: auto; }
+          .search-results .game-card img { height: 130px; }
+          @media(max-width:1100px){ .search-results { grid-template-columns:repeat(3,1fr); } }
+          .card-placeholder { background: var(--card); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; animation: pulse 1.4s infinite; flex-shrink: 0; width: 240px; }
+          .card-placeholder .ph-img { width: 100%; height: 112px; background: #2a2a2a; }
+          .card-placeholder .ph-info { padding: 9px 11px 13px; display: flex; flex-direction: column; gap: 7px; }
+          .card-placeholder .ph-line { height: 11px; border-radius: 3px; background: #2e2e2e; }
+          .ph-short { width: 55%; }
+          @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
+          .footer-bar { background: var(--bg2); border-top: 1px solid var(--border); padding: 10px 20px; display: flex; justify-content: center; gap: 10px; flex-shrink: 0; }
+          #game-screen { background: var(--bg); }
+          .game-title-bar { padding: 20px 30px 0; font-family: 'Rajdhani', sans-serif; font-size: 2rem; font-weight: 700; }
+          .game-body { display: flex; gap: 24px; padding: 20px 30px; flex: 1; overflow-y: auto; }
+          .game-left { flex: 1; background: #0a0a0a; border: 1px solid var(--border); border-radius: 6px; display: flex; align-items: center; justify-content: center; color: var(--muted); min-height: 300px; }
+          .game-left video { width: 100%; border-radius: 6px; max-height: 420px; }
+          .game-right { width: 380px; flex-shrink: 0; background: var(--bg3); border: 1px solid var(--border); border-radius: 6px; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+          .game-right img { width: 100%; border-radius: 4px; }
+          .game-right-desc { color: var(--muted); font-size: 0.85rem; line-height: 1.5; }
+          .game-right-tags { color: var(--accent2); font-size: 0.82rem; font-weight: 600; }
+          .game-footer { background: var(--bg2); border-top: 1px solid var(--border); padding: 12px 20px; display: flex; justify-content: center; gap: 10px; flex-shrink: 0; }
+          .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.65); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+          .modal-overlay.hidden { display: none; }
+          .modal { background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 24px; min-width: 320px; max-width: 480px; width: 90%; display: flex; flex-direction: column; gap: 14px; max-height: 90vh; overflow-y: auto; }
+          .modal h3 { font-size: 1.1rem; font-weight: 600; }
+          .modal label { font-size: 0.78rem; color: var(--muted); display: block; margin-bottom: 3px; }
+          .modal input, .modal textarea { width: 100%; background: var(--inp); border: 1px solid var(--border); border-radius: 4px; padding: 7px 10px; color: var(--text); font-family: 'Inter', sans-serif; font-size: 0.9rem; outline: none; }
+          .modal input:focus, .modal textarea:focus { border-color: var(--accent); }
+          .modal textarea { resize: vertical; min-height: 70px; }
+          .modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
+          .modal-pre { background: var(--bg); border: 1px solid var(--border); border-radius: 4px; padding: 10px; font-size: 0.83rem; color: var(--muted); white-space: pre-wrap; word-break: break-word; max-height: 220px; overflow-y: auto; font-family: 'Inter', sans-serif; line-height: 1.6; }
+          .toast { position: fixed; bottom: 24px; right: 24px; background: var(--bg3); border: 1px solid var(--border); border-radius: 6px; padding: 12px 18px; font-size: 0.88rem; color: var(--text); z-index: 2000; opacity: 0; transform: translateY(10px); transition: all .25s; pointer-events: none; }
+          .toast.show { opacity: 1; transform: translateY(0); }
+          .notif-badge { background: var(--accent2); color: #fff; border-radius: 50%; font-size: 0.7rem; padding: 1px 5px; margin-left: 4px; vertical-align: middle; display: none; }
+          .notif-badge.visible { display: inline; }
+        `;
+        document.head.appendChild(style);
+    const AuthService = (() => {
+      const usernames = ["admin", "user"];
+      const passwords = ["admin123", "user123"];
+      const roles     = ["admin", "user"];
+      return {
+        login(username, password) {
+          for (let i = 0; i < usernames.length; i++)
+            if (usernames[i] === username && passwords[i] === password) return roles[i];
+          return "invalid";
+        },
+        addUser(username, password, role) { usernames.push(username); passwords.push(password); roles.push(role); },
+        userExists(username) { return usernames.includes(username); },
+        removeUser(username) { const i=usernames.indexOf(username); if(i!==-1){usernames.splice(i,1);passwords.splice(i,1);roles.splice(i,1);} },
+        changePassword(username, newPassword) { const i=usernames.indexOf(username); if(i!==-1) passwords[i]=newPassword; },
+        getAllUsers() { return usernames.map((u,i)=>`Username: ${u} | Role: ${roles[i]}`).join("\n"); }
+      };
+    })();
+
+    const UserService = {
+      registerUser(username, password, role) {
+        if (role !== "admin" && role !== "user") return false;
+        if (!username || !password) return false;
+        if (AuthService.userExists(username)) return false;
+        AuthService.addUser(username, password, role); return true;
+      },
+      removeUser(username) {
+        if (!AuthService.userExists(username)) return false;
+        AuthService.removeUser(username); return true;
+      },
+      getAllUsers()         { return AuthService.getAllUsers(); },
+      userExists(username) { return AuthService.userExists(username); },
+      changePassword(username, newPassword) {
+        if (!newPassword) return false;
+        AuthService.changePassword(username, newPassword); return true;
+      }
+    };
+
+    const SessionService = (() => {
+      let currentUsername = null;
+      let currentRole     = null;
+      return {
+        startSession(username, role) { currentUsername = username; currentRole = role; },
+        endSession()                 { currentUsername = null; currentRole = null; },
+        isLoggedIn()                 { return currentUsername !== null; },
+        isAdmin()                    { return currentUsername !== null && currentRole === "admin"; },
+        isUser()                     { return currentUsername !== null && currentRole === "user"; },
+        getCurrentUsername()         { return currentUsername; },
+        getCurrentRole()             { return currentRole; }
+      };
+    })();
+
+    const GameService = (() => {
+      const ids=[],titles=[],genres=[],platforms=[],prices=[],descriptions=[],trailerUrls=[],averageRatings=[];
+      let nextId = 1;
+      return {
+        addGame(title, genre, platform, price, description, trailerUrl) {
+          ids.push(nextId++); titles.push(title); genres.push(genre); platforms.push(platform);
+          prices.push(price); descriptions.push(description); trailerUrls.push(trailerUrl); averageRatings.push(0.0);
+          return true;
+        },
+        editGame(id, title, genre, platform, price, description, trailerUrl) {
+          const i=ids.indexOf(id); if(i===-1) return false;
+          titles[i]=title; genres[i]=genre; platforms[i]=platform;
+          prices[i]=price; descriptions[i]=description; trailerUrls[i]=trailerUrl; return true;
+        },
+        editPrice(id, newPrice) {
+          if (newPrice < 0) return false;
+          const i=ids.indexOf(id); if(i===-1) return false;
+          prices[i]=newPrice; return true;
+        },
+        removeGame(id) {
+          const i=ids.indexOf(id); if(i===-1) return false;
+          [ids,titles,genres,platforms,prices,descriptions,trailerUrls,averageRatings].forEach(a=>a.splice(i,1));
+          return true;
+        },
+        getAllGames() {
+          if (!ids.length) return "No games in catalogue.";
+          return ids.map((id,i)=>`ID: ${id} | Title: ${titles[i]} | Genre: ${genres[i]} | Platform: ${platforms[i]} | Price: $${prices[i]} | Rating: ${averageRatings[i]}`).join("\n");
+        },
+        getIndexById(id) { return ids.indexOf(id); },
+        getId(i)         { return ids[i]; },
+        getTitle(i)      { return titles[i]; },
+        getSize()        { return ids.length; },
+        updateAverageRating(id, r) { const i=ids.indexOf(id); if(i!==-1) averageRatings[i]=r; },
+        getAllIds()       { return ids; }
+      };
+    })();
+
+    const GenreService = (() => {
+      const genres = ["Action", "RPG", "Sports", "Shooter", "Sandbox"];
+      const MAX_GENRES = 5;
+      return {
+        addGenre(name) {
+          if (genres.length >= MAX_GENRES) return false;
+          if (genres.some(g => g.toLowerCase() === name.toLowerCase())) return false;
+          genres.push(name); return true;
+        },
+        removeGenre(name) {
+          const i = genres.findIndex(g => g.toLowerCase() === name.toLowerCase());
+          if (i === -1) return false;
+          genres.splice(i, 1); return true;
+        },
+        getAllGenres() {
+          if (!genres.length) return "No genres available.";
+          return genres.map((g,i) => `${i+1}. ${g}`).join("\n");
+        },
+        genreExists(name)   { return genres.some(g => g.toLowerCase() === name.toLowerCase()); },
+        getGenreList()      { return genres; },
+        getRemainingSlots() { return MAX_GENRES - genres.length; }
+      };
+    })();
+
+    const NotificationService = (() => {
+      const notificationIds = [];
+      const messages        = [];
+      const isRead          = [];
+      let nextNotificationId = 1;
+      return {
+        addNotification(message) {
+          notificationIds.push(nextNotificationId++);
+          messages.push(message);
+          isRead.push(false);
+        },
+        getUnreadNotifications() {
+          const lines = [];
+          for (let i=0;i<notificationIds.length;i++)
+            if (!isRead[i]) lines.push(`[${notificationIds[i]}] ${messages[i]}`);
+          return lines.length ? lines.join("\n") : "No new notifications.";
+        },
+        getAllNotifications() {
+          if (!notificationIds.length) return "No notifications.";
+          return notificationIds.map((id,i) =>
+            `[${id}] ${isRead[i]?'[READ]  ':'[UNREAD]'} ${messages[i]}`
+          ).join("\n");
+        },
+        markAsRead(notificationId) {
+          const i=notificationIds.indexOf(notificationId); if(i===-1) return false;
+          isRead[i]=true; return true;
+        },
+        markAllAsRead() { for(let i=0;i<isRead.length;i++) isRead[i]=true; },
+        getUnreadCount() { return isRead.filter(r=>!r).length; },
+        clearAll()       { notificationIds.length=0; messages.length=0; isRead.length=0; }
+      };
+    })();
+
+    const ReviewService = (() => {
+      const reviewIds=[],gameIds=[],usernames=[],ratings=[],comments=[],approved=[];
+      let nextReviewId = 1;
+      function updateAvg(gameId) {
+        let total=0, count=0;
+        for(let i=0;i<reviewIds.length;i++) if(gameIds[i]===gameId&&approved[i]){total+=ratings[i];count++;}
+        if(count>0) GameService.updateAverageRating(gameId, total/count);
+      }
+      return {
+        submitReview(gameId, username, rating, comment, gameTitle) {
+          if(rating<1||rating>5) return false;
+          for(let i=0;i<reviewIds.length;i++) if(gameIds[i]===gameId&&usernames[i]===username) return false;
+          reviewIds.push(nextReviewId++); gameIds.push(gameId); usernames.push(username);
+          ratings.push(rating); comments.push(comment); approved.push(false);
+          NotificationService.addNotification(`New review pending for: ${gameTitle} by ${username}`);
+          return true;
+        },
+        getPendingReviews() {
+          const lines=[];
+          for(let i=0;i<reviewIds.length;i++)
+            if(!approved[i]) lines.push(`Review ID: ${reviewIds[i]} | Game ID: ${gameIds[i]} | User: ${usernames[i]} | Rating: ${ratings[i]} | Comment: ${comments[i]}`);
+          return lines.length ? lines.join("\n") : "No pending reviews.";
+        },
+        approveReview(reviewId) { const i=reviewIds.indexOf(reviewId); if(i===-1) return false; approved[i]=true; updateAvg(gameIds[i]); return true; },
+        rejectReview(reviewId) {
+          const i=reviewIds.indexOf(reviewId); if(i===-1) return false;
+          [reviewIds,gameIds,usernames,ratings,comments,approved].forEach(a=>a.splice(i,1)); return true;
+        },
+        getApprovedReviews(gameId) {
+          const lines=[];
+          for(let i=0;i<reviewIds.length;i++)
+            if(gameIds[i]===gameId&&approved[i]) lines.push(`User: ${usernames[i]} | Rating: ${ratings[i]} | Comment: ${comments[i]}`);
+          return lines.length ? lines.join("\n") : "No reviews yet.";
+        }
+      };
+    })();
+
+    const WishlistService = (() => {
+      const usernames=[],gameIds=[],gameTitles=[];
+      return {
+        addToWishlist(username, gameId, gameTitle) {
+          if(this.isInWishlist(username,gameId)) return false;
+          usernames.push(username); gameIds.push(gameId); gameTitles.push(gameTitle); return true;
+        },
+        removeFromWishlist(username, gameId) {
+          for(let i=0;i<usernames.length;i++)
+            if(usernames[i]===username&&gameIds[i]===gameId){usernames.splice(i,1);gameIds.splice(i,1);gameTitles.splice(i,1);return true;}
+          return false;
+        },
+        getWishlist(username) {
+          const lines=[];
+          for(let i=0;i<usernames.length;i++) if(usernames[i]===username) lines.push(`Game ID: ${gameIds[i]} | Title: ${gameTitles[i]}`);
+          return lines.length ? lines.join("\n") : "Wishlist is empty.";
+        },
+        isInWishlist(username, gameId) {
+          for(let i=0;i<usernames.length;i++) if(usernames[i]===username&&gameIds[i]===gameId) return true;
+          return false;
+        },
+        clearWishlist(username) {
+          for(let i=usernames.length-1;i>=0;i--) if(usernames[i]===username){usernames.splice(i,1);gameIds.splice(i,1);gameTitles.splice(i,1);}
+          return true;
+        }
+      };
+    })();
+
+    const GAMES_LIST = [730, 570, 440, 578080, 1091500, 1172470, 271590, 252490, 413150, 550, 620980, 2651280, 1774580,
+    739630, 1392860, 3017860, 1547000, 105600, 1966720, 1693980, 1326470, 502570, 413150];
+    const CORS_PROXY = "https://corsproxy.io/?url=";
+    const gameCache  = {};
+    let currentUser  = null;
+    let isAdmin      = false;
+
+    function showScreen(id) {
+      document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+    }
+    function showToast(msg) {
+      const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
+      setTimeout(()=>t.classList.remove('show'),2500);
+    }
+    function openModal(html) { document.getElementById('modal-box').innerHTML=html; document.getElementById('modal-overlay').classList.remove('hidden'); }
+    function closeModal()    { document.getElementById('modal-overlay').classList.add('hidden'); }
+    function escHtml(s)      { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+    document.getElementById('modal-overlay').addEventListener('click', e=>{
+      if(e.target===document.getElementById('modal-overlay')) closeModal();
+    });
+    document.getElementById('inp-pass').addEventListener('keydown', e=>{ if(e.key==='Enter') doLogin(); });
+
+    function doLogin() {
+      const username=document.getElementById('inp-user').value.trim();
+      const password=document.getElementById('inp-pass').value;
+      const role=AuthService.login(username, password);
+      const err=document.getElementById('login-error');
+      if(role==='admin'||role==='user'){
+        currentUser=username; isAdmin=role==='admin';
+        SessionService.startSession(username, role);
+        err.style.display='none'; openCatalog();
+      } else { err.style.display='block'; }
+    }
+
+    function doLogout() {
+      SessionService.endSession();
+      currentUser=null; isAdmin=false;
+      document.getElementById('inp-user').value='';
+      document.getElementById('inp-pass').value='';
+      showScreen('login-screen');
+    }
+
+    function openCatalog() { showScreen('catalog-screen'); buildHeaderRight(); buildGameGrid(); }
+
+    function buildHeaderRight() {
+      const hr=document.getElementById('header-right'); hr.innerHTML='';
+      if(!isAdmin){
+        const b=document.createElement('button'); b.className='btn btn-ghost'; b.textContent='Cart'; b.onclick=showCart; hr.appendChild(b);
+      }
+      if(isAdmin){
+        const a=document.createElement('button'); a.className='btn btn-primary'; a.textContent='Add Game'; a.onclick=showAddGameModal; hr.appendChild(a);
+        const r=document.createElement('button'); r.className='btn btn-danger'; r.textContent='Remove Game'; r.onclick=showRemoveGameModal; hr.appendChild(r);
+        const g=document.createElement('button'); g.className='btn btn-ghost'; g.textContent='Genres'; g.onclick=showGenresModal; hr.appendChild(g);
+        const rv=document.createElement('button'); rv.className='btn btn-ghost'; rv.textContent='Pending Reviews'; rv.onclick=showPendingReviewsModal; hr.appendChild(rv);
+        const nb=document.createElement('button'); nb.className='btn btn-ghost'; nb.id='notif-btn';
+        const badge=document.createElement('span'); badge.className='notif-badge'; badge.id='notif-badge';
+        nb.textContent='Notifications'; nb.appendChild(badge); nb.onclick=showNotificationsModal; hr.appendChild(nb);
+        updateNotifBadge();
+      }
+    }
+
+    function updateNotifBadge() {
+      const badge=document.getElementById('notif-badge'); if(!badge) return;
+      const count=NotificationService.getUnreadCount();
+      badge.textContent=count; badge.className='notif-badge'+(count>0?' visible':'');
+    }
+
+    function buildGameGrid() {
+  const body=document.getElementById('catalog-body');
+  const searchResults=document.getElementById('search-results');
+  body.querySelectorAll('.genre-section').forEach(s=>s.remove());
+  searchResults.innerHTML='';
+  searchResults.classList.remove('active');
+
+  const placeholderSection=document.createElement('div');
+  placeholderSection.className='genre-section';
+  placeholderSection.id='placeholder-section';
+  const placeholderRow=document.createElement('div');
+  placeholderRow.className='genre-row';
+  GAMES_LIST.forEach(()=>{
+    const ph=document.createElement('div'); ph.className='card-placeholder';
+    ph.innerHTML='<div class="ph-img"></div><div class="ph-info"><div class="ph-line"></div><div class="ph-line ph-short"></div></div>';
+    placeholderRow.appendChild(ph);
+  });
+  placeholderSection.appendChild(placeholderRow);
+  body.appendChild(placeholderSection);
+
+  const promises=GAMES_LIST.map(appID=>fetchGameData(appID).then(game=>({appID,game})));
+  Promise.all(promises).then(results=>{
+    document.getElementById('placeholder-section')?.remove();
+
+    const genreMap={};
+    results.forEach(({appID,game})=>{
+      if(!game) return;
+      const primaryGenre=game.genres[0]||'Other';
+      if(!genreMap[primaryGenre]) genreMap[primaryGenre]=[];
+      genreMap[primaryGenre].push({appID,game});
+    });
+
+    Object.keys(genreMap).sort().forEach(genre=>{
+      const section=document.createElement('div');
+      section.className='genre-section';
+      section.dataset.genre=genre;
+
+      const heading=document.createElement('div');
+      heading.className='genre-heading';
+      heading.textContent=genre;
+
+      const row=document.createElement('div');
+      row.className='genre-row';
+
+      genreMap[genre].forEach(({appID,game})=>{
+        row.appendChild(buildCard(appID,game));
+      });
+
+      section.appendChild(heading);
+      section.appendChild(row);
+      body.appendChild(section);
+    });
+
+    results.forEach(({appID,game})=>{
+      if(!game) return;
+      searchResults.appendChild(buildCard(appID,game));
+    });
+  });
+}
+
+    async function fetchGameData(appID) {
+      if(gameCache[appID]) return gameCache[appID];
+      try {
+        const res=await fetch(`${CORS_PROXY}https://store.steampowered.com/api/appdetails?appids=${appID}`);
+        const json=await res.json();
+        const data=json[String(appID)]?.data; if(!data) return null;
+        let platform="WEB";
+        const p=data.platforms||{};
+        if(p.windows) platform="Windows"; else if(p.mac) platform="Mac"; else if(p.linux) platform="Linux";
+        const game={ name:data.name, description:data.short_description, imageURL:data.header_image, platform, genres:(data.genres||[]).map(g=>g.description).slice(0,3), movies:data.movies||[] };
+        gameCache[appID]=game; return game;
+      } catch { return null; }
+    }
+
+    function buildCard(appID, game) {
+      const card=document.createElement('div'); card.className='game-card';
+      card.dataset.name=game.name.toLowerCase(); card.dataset.desc=game.description.toLowerCase();
+      card.innerHTML=`
+        <img src="${game.imageURL}" alt="${escHtml(game.name)}" loading="lazy"/>
+        <div class="card-info">
+          <div class="card-title-row"><span class="card-title">${escHtml(game.name)}</span><span class="platform-tag">${game.platform}</span></div>
+          <div class="card-tags">${game.genres.map(g=>'#'+g).join('  ')}</div>
+          <div class="card-desc">${escHtml(game.description)}</div>
+        </div>`;
+      card.addEventListener('click',()=>openGame(appID,game.name));
+      return card;
+    }
+
+    function filterCatalog() {
+        const text=document.getElementById('search-bar').value.toLowerCase().trim();
+        const body=document.getElementById('catalog-body');
+        const searchResults=document.getElementById('search-results');
+
+  if(!text){
+    searchResults.classList.remove('active');
+    body.querySelectorAll('.genre-section').forEach(s=>s.style.display='block');
+  } else {
+    body.querySelectorAll('.genre-section').forEach(s=>s.style.display='none');
+    searchResults.classList.add('active');
+    searchResults.querySelectorAll('.game-card').forEach(card=>{
+      card.style.display=(card.dataset.name.includes(text)||card.dataset.desc.includes(text))?'':'none';
+    });
+  }
+}
+
+    function showCart() {
+      const contents=WishlistService.getWishlist(currentUser);
+      openModal(`<h3>My Cart</h3><div class="modal-pre">${escHtml(contents)}</div><div class="modal-actions"><button class="btn btn-ghost" onclick="closeModal()">Close</button></div>`);
+    }
+
+    function showAddGameModal() {
+      openModal(`
+        <h3>Add Game</h3>
+        <div><label>Title</label><input id="ag-title"/></div>
+        <div><label>Genre</label><input id="ag-genre"/></div>
+        <div><label>Platform</label><input id="ag-platform"/></div>
+        <div><label>Price</label><input id="ag-price" type="number" step="0.01"/></div>
+        <div><label>Description</label><textarea id="ag-desc"></textarea></div>
+        <div><label>Trailer URL</label><input id="ag-trailer"/></div>
+        <div class="modal-actions">
+          <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+          <button class="btn btn-primary" onclick="doAddGame()">Add</button>
+        </div>`);
+    }
+    function doAddGame() {
+      const ok=GameService.addGame(
+        document.getElementById('ag-title').value,
+        document.getElementById('ag-genre').value,
+        document.getElementById('ag-platform').value,
+        parseFloat(document.getElementById('ag-price').value)||0,
+        document.getElementById('ag-desc').value,
+        document.getElementById('ag-trailer').value
+      );
+      closeModal(); showToast(ok?'Game added successfully!':'Failed to add game.');
+    }
+
+    function showRemoveGameModal() {
+      openModal(`
+        <h3>Remove Game</h3>
+        <div><label>Game ID</label><input id="rm-id" type="number"/></div>
+        <div class="modal-actions">
+          <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+          <button class="btn btn-danger" onclick="doRemoveGame()">Remove</button>
+        </div>`);
+    }
+    function doRemoveGame() {
+      const ok=GameService.removeGame(parseInt(document.getElementById('rm-id').value));
+      closeModal(); showToast(ok?'Game removed successfully!':'Failed to remove game.');
+    }
+
+    function showGenresModal() {
+      const list=GenreService.getAllGenres();
+      const slots=GenreService.getRemainingSlots();
+      openModal(`
+        <h3>Manage Genres</h3>
+        <div class="modal-pre">${escHtml(list)}</div>
+        <div style="font-size:0.78rem;color:var(--muted);">Remaining slots: ${slots} / 5</div>
+        <div><label>Add Genre</label><input id="genre-add-name" placeholder="Genre name"/></div>
+        <div><label>Remove Genre</label><input id="genre-rm-name" placeholder="Genre name"/></div>
+        <div class="modal-actions">
+          <button class="btn btn-ghost" onclick="closeModal()">Close</button>
+          <button class="btn btn-danger" onclick="doRemoveGenre()">Remove</button>
+          <button class="btn btn-primary" onclick="doAddGenre()">Add</button>
+        </div>`);
+    }
+    function doAddGenre() {
+      const name=document.getElementById('genre-add-name').value.trim();
+      const ok=GenreService.addGenre(name);
+      closeModal(); showToast(ok?`Genre "${name}" added!`:`Failed — duplicate, max 5, or blank.`);
+    }
+    function doRemoveGenre() {
+      const name=document.getElementById('genre-rm-name').value.trim();
+      const ok=GenreService.removeGenre(name);
+      closeModal(); showToast(ok?`Genre "${name}" removed!`:`Genre "${name}" not found.`);
+    }
+
+    function showPendingReviewsModal() {
+      const pending=ReviewService.getPendingReviews();
+      openModal(`
+        <h3>Pending Reviews</h3>
+        <div class="modal-pre">${escHtml(pending)}</div>
+        <div><label>Review ID to Approve</label><input id="rev-approve-id" type="number"/></div>
+        <div><label>Review ID to Reject</label><input id="rev-reject-id" type="number"/></div>
+        <div class="modal-actions">
+          <button class="btn btn-ghost" onclick="closeModal()">Close</button>
+          <button class="btn btn-danger" onclick="doRejectReview()">Reject</button>
+          <button class="btn btn-primary" onclick="doApproveReview()">Approve</button>
+        </div>`);
+    }
+    function doApproveReview() {
+      const id=parseInt(document.getElementById('rev-approve-id').value);
+      const ok=ReviewService.approveReview(id);
+      closeModal(); showToast(ok?'Review approved!':'Review not found.');
+    }
+    function doRejectReview() {
+      const id=parseInt(document.getElementById('rev-reject-id').value);
+      const ok=ReviewService.rejectReview(id);
+      closeModal(); showToast(ok?'Review rejected.':'Review not found.');
+    }
+
+    function showNotificationsModal() {
+      const all=NotificationService.getAllNotifications();
+      openModal(`
+        <h3>Notifications</h3>
+        <div class="modal-pre">${escHtml(all)}</div>
+        <div class="modal-actions">
+          <button class="btn btn-ghost" onclick="closeModal()">Close</button>
+          <button class="btn btn-primary" onclick="doMarkAllRead()">Mark All Read</button>
+        </div>`);
+      NotificationService.markAllAsRead();
+      updateNotifBadge();
+    }
+    function doMarkAllRead() {
+      NotificationService.markAllAsRead();
+      closeModal(); updateNotifBadge(); showToast('All notifications marked as read.');
+    }
+
+    async function openGame(appID, gameName) {
+      showScreen('game-screen');
+      document.getElementById('game-title-bar').textContent='…';
+      document.getElementById('game-left').innerHTML='<span>Loading…</span>';
+      document.getElementById('game-right').innerHTML='';
+      document.getElementById('game-footer').innerHTML='';
+
+      const game=await fetchGameData(appID);
+      if(!game){ document.getElementById('game-title-bar').textContent='Failed to load.'; return; }
+
+      document.getElementById('game-title-bar').textContent=game.name;
+
+      const leftEl=document.getElementById('game-left');
+      const webm=game.movies?.[0]?.webm?.['480']||game.movies?.[0]?.mp4?.['480']||'';
+      leftEl.innerHTML=webm?`<video controls autoplay muted src="${webm}"></video>`:'<span>Trailer unavailable</span>';
+
+      const reviews=ReviewService.getApprovedReviews(appID);
+      document.getElementById('game-right').innerHTML=`
+        <img src="${game.imageURL}" alt="${escHtml(game.name)}"/>
+        <div class="game-right-desc">${escHtml(game.description)}</div>
+        <div class="game-right-tags">${game.genres.map(g=>'#'+g).join('   ')}</div>
+        <div style="margin-top:6px;font-size:0.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;font-weight:600;">Reviews</div>
+        <div class="modal-pre" style="max-height:110px;">${escHtml(reviews)}</div>`;
+
+      const footer=document.getElementById('game-footer');
+      const backBtn=document.createElement('button');
+      backBtn.className='btn btn-ghost'; backBtn.textContent='Back'; backBtn.onclick=openCatalog;
+      footer.appendChild(backBtn);
+
+      if(!isAdmin){
+        const cartBtn=document.createElement('button'); cartBtn.className='btn btn-primary';
+        const already=WishlistService.isInWishlist(currentUser,appID);
+        cartBtn.textContent=already?'In Cart':'Add to Cart';
+        if(already) cartBtn.disabled=true;
+        cartBtn.onclick=()=>{
+          const ok=WishlistService.addToWishlist(currentUser,appID,gameName);
+          showToast(ok?`${gameName} added to cart!`:`${gameName} is already in your cart!`);
+          cartBtn.textContent='In Cart'; cartBtn.disabled=true;
+        };
+        footer.appendChild(cartBtn);
+
+        const reviewBtn=document.createElement('button'); reviewBtn.className='btn btn-ghost'; reviewBtn.textContent='Write Review';
+        reviewBtn.onclick=()=>showReviewModal(appID, gameName);
+        footer.appendChild(reviewBtn);
+      }
+    }
+
+    function showReviewModal(gameId, gameTitle) {
+      openModal(`
+        <h3>Review: ${escHtml(gameTitle)}</h3>
+        <div><label>Rating (1–5)</label><input id="rv-rating" type="number" min="1" max="5"/></div>
+        <div><label>Comment</label><textarea id="rv-comment"></textarea></div>
+        <div class="modal-actions">
+          <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+          <button class="btn btn-primary" onclick="doSubmitReview(${gameId}, '${gameTitle.replace(/'/g,"\\'")}')">Submit</button>
+        </div>`);
+    }
+    function doSubmitReview(gameId, gameTitle) {
+      const rating=parseInt(document.getElementById('rv-rating').value);
+      const comment=document.getElementById('rv-comment').value;
+      const ok=ReviewService.submitReview(gameId, currentUser, rating, comment, gameTitle);
+      closeModal();
+      showToast(ok?'Review submitted! Waiting for admin approval.':'Failed — invalid rating or already reviewed.');
+    }
+</script>
+</body>
+</html>
