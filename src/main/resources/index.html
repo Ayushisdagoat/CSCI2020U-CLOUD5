@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>CLOUD5 Game Store</title>
     <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet"/>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.5.7/hls.min.js"></script>
 </head>
 <body>
 
@@ -28,9 +29,6 @@
     <div class="catalog-body" id="catalog-body">
         <div class="search-results" id="search-results"></div>
     </div>
-    <div class="footer-bar">
-        <button class="btn btn-ghost" onclick="doLogout()">Logout</button>
-    </div>
 </div>
 
 <div id="game-screen" class="screen">
@@ -48,9 +46,27 @@
         <span style="color:var(--muted);font-size:0.9rem;">My Cart</span>
     </div>
     <div class="cart-body" id="cart-body"></div>
-    <div class="cart-footer">
-        <button class="btn btn-ghost" onclick="openCatalog()">← Continue Shopping</button>
-        <button class="btn btn-danger" onclick="clearCart()">Clear Cart</button>
+    <div class="cart-footer" style="flex-direction:column;gap:12px;align-items:stretch;">
+        <div id="cart-total-row" class="cart-total-row" style="display:none;">
+            <span class="cart-total-label">Estimated Total</span>
+            <span class="cart-total-value" id="cart-total-value">$0.00</span>
+        </div>
+        <div style="display:flex;gap:10px;justify-content:flex-end;">
+            <button class="btn btn-ghost" onclick="openCatalog()">← Continue Shopping</button>
+            <button class="btn btn-danger" onclick="clearCart()">Clear Cart</button>
+            <button class="btn btn-buy" id="cart-buy-btn" style="display:none;" onclick="showToast('Purchased')">Buy Now</button>
+        </div>
+    </div>
+</div>
+
+<div id="profile-screen" class="screen">
+    <div class="profile-header">
+        <div class="header-logo">CLOUD5</div>
+        <span style="color:var(--muted);font-size:0.9rem;">Profile</span>
+    </div>
+    <div class="profile-body" id="profile-body"></div>
+    <div class="profile-footer">
+        <button class="btn btn-ghost" onclick="openCatalog()">← Back to Store</button>
     </div>
 </div>
 
@@ -76,14 +92,15 @@
             --inp:     #3c3c3c;
           }
           * { box-sizing: border-box; margin: 0; padding: 0; }
-          body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; min-height: 100vh; }
+          body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; height: 100vh; overflow: hidden; }
           .screen {
             display: none;
           }
           .screen.active {
             display: flex;
             flex-direction: column;
-            min-height: 100vh;
+            height: 100vh;
+            overflow: hidden;
           }
           #login-screen {
             align-items: center;
@@ -336,60 +353,326 @@
             flex-direction: column;
             gap: 7px;
           }
-          .card-placeholder .ph-line { height: 11px; border-radius: 3px; background: #2e2e2e; }
-          .ph-short { width: 55%; }
-          @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
-          .footer-bar { background: var(--bg2); border-top: 1px solid var(--border); padding: 10px 20px; display: flex; justify-content: center; gap: 10px; flex-shrink: 0; }
-          #game-screen { background: var(--bg); }
-          .game-title-bar { padding: 20px 30px 0; font-family: 'Rajdhani', sans-serif; font-size: 2rem; font-weight: 700; }
-          .game-body { display: flex; gap: 24px; padding: 20px 30px; flex: 1; overflow-y: auto; }
-          .game-left { flex: 1; background: #0a0a0a; border: 1px solid var(--border); border-radius: 6px; display: flex; align-items: center; justify-content: center; color: var(--muted); min-height: 300px; }
-          .game-left video { width: 100%; border-radius: 6px; max-height: 420px; }
-          .game-right { width: 380px; flex-shrink: 0; background: var(--bg3); border: 1px solid var(--border); border-radius: 6px; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
-          .game-right img { width: 100%; border-radius: 4px; }
-          .game-right-desc { color: var(--muted); font-size: 0.85rem; line-height: 1.5; }
-          .game-right-tags { color: var(--accent2); font-size: 0.82rem; font-weight: 600; }
-          .game-footer { background: var(--bg2); border-top: 1px solid var(--border); padding: 12px 20px; display: flex; justify-content: center; gap: 10px; flex-shrink: 0; }
-          .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.65); display: flex; align-items: center; justify-content: center; z-index: 1000; }
-          .modal-overlay.hidden { display: none; }
-          .modal { background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 24px; min-width: 320px; max-width: 480px; width: 90%; display: flex; flex-direction: column; gap: 14px; max-height: 90vh; overflow-y: auto; }
-          .modal h3 { font-size: 1.1rem; font-weight: 600; }
-          .modal label { font-size: 0.78rem; color: var(--muted); display: block; margin-bottom: 3px; }
-          .modal input, .modal textarea { width: 100%; background: var(--inp); border: 1px solid var(--border); border-radius: 4px; padding: 7px 10px; color: var(--text); font-family: 'Inter', sans-serif; font-size: 0.9rem; outline: none; }
-          .modal input:focus, .modal textarea:focus { border-color: var(--accent); }
-          .modal textarea { resize: vertical; min-height: 70px; }
-          .modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
-          .modal-pre { background: var(--bg); border: 1px solid var(--border); border-radius: 4px; padding: 10px; font-size: 0.83rem; color: var(--muted); white-space: pre-wrap; word-break: break-word; max-height: 220px; overflow-y: auto; font-family: 'Inter', sans-serif; line-height: 1.6; }
-          .toast { position: fixed; bottom: 24px; right: 24px; background: var(--bg3); border: 1px solid var(--border); border-radius: 6px; padding: 12px 18px; font-size: 0.88rem; color: var(--text); z-index: 2000; opacity: 0; transform: translateY(10px); transition: all .25s; pointer-events: none; }
-          .toast.show { opacity: 1; transform: translateY(0); }
-          .notif-badge { background: var(--accent2); color: #fff; border-radius: 50%; font-size: 0.7rem; padding: 1px 5px; margin-left: 4px; vertical-align: middle; display: none; }
-          .notif-badge.visible { display: inline; }
-          .star-rating { display: flex; gap: 5px; cursor: pointer; font-size: 1.5rem; color: #444; margin: 10px 0; }
-          .star-rating .star.active { color: #f1c40f; }
-          .star-rating .star:hover { color: #f39c12; }
-          .media-slider {
-                display: flex; gap: 10px; overflow-x: auto; padding: 10px 0;
-                scroll-snap-type: x mandatory; background: #000; border-radius: 6px;
+          .card-placeholder .ph-line {
+            height: 11px;
+            border-radius: 3px;
+            background: #2e2e2e;
+          }
+          .ph-short {
+            width: 55%;
+          }
+          @keyframes pulse {
+            0%,100%{opacity:1} 50%{opacity:.5}
+          }
+          .footer-bar {
+            background: var(--bg2);
+            border-top: 1px solid var(--border);
+            padding: 10px 20px;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-shrink: 0;
+          }
+          #game-screen {
+            background: var(--bg);
+          }
+          .game-title-bar {
+            padding: 20px 30px 0;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 2rem;
+            font-weight: 700;
+          }
+          .game-body {
+            display: flex;
+            gap: 24px;
+            padding: 20px 30px;
+            flex: 1;
+            overflow: hidden;
+            min-height: 0;
+          }
+          .game-left {
+            flex: 1;
+            background: #000;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            display: flex;
+            flex-direction: column;
+            color: var(--muted);
+            overflow: hidden;
+            min-height: 0;
+          }
+          .game-left video {
+            width: 100%;
+            display: block;
+          }
+          .game-right {
+            width: 380px;
+            flex-shrink: 0;
+            background: var(--bg3);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 14px;
+            display: flex;
+            flex-direction: column; gap: 10px;
+            overflow-y: auto;
+          }
+          .game-right img {
+            width: 100%;
+            border-radius: 4px;
+          }
+          .game-right-desc {
+            color: var(--muted);
+            font-size: 0.85rem;
+            line-height: 1.5;
+          }
+          .game-right-tags {
+            color: var(--accent2);
+            font-size: 0.82rem;
+            font-weight: 600;
+          }
+          .game-footer {
+            background: var(--bg2);
+            border-top: 1px solid var(--border);
+            padding: 12px 20px;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-shrink: 0;
+          }
+          .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,.65);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+          }
+          .modal-overlay.hidden {
+            display: none;
+          }
+          .modal {
+            background: var(--bg3);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 24px;
+            min-width: 320px;
+            max-width: 480px;
+            width: 90%;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            max-height: 90vh;
+            overflow-y: auto;
+          }
+          .modal h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+          }
+          .modal label {
+            font-size: 0.78rem;
+            color: var(--muted);
+            display: block;
+            margin-bottom: 3px;
+          }
+          .modal input, .modal textarea {
+            width: 100%;
+            background: var(--inp);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 7px 10px;
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            font-size: 0.9rem;
+            outline: none;
+          }
+          .modal input:focus, .modal textarea:focus {
+            border-color: var(--accent);
+          }
+          .modal textarea {
+            resize: vertical;
+            min-height: 70px;
+          }
+          .modal-actions {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+          }
+          .modal-pre {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 10px;
+            font-size: 0.83rem;
+            color: var(--muted);
+            white-space: pre-wrap;
+            word-break: break-word;
+            max-height: 220px;
+            overflow-y: auto;
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+          }
+          .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: var(--bg3);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 12px 18px;
+            font-size: 0.88rem;
+            color: var(--text);
+            z-index: 2000;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all .25s;
+            pointer-events: none;
+          }
+          .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+          }
+          .notif-badge {
+            background: var(--accent2);
+            color: #fff;
+            border-radius: 50%;
+            font-size: 0.7rem;
+            padding: 1px 5px;
+            margin-left: 4px;
+            vertical-align: middle;
+            display: none;
+          }
+          .notif-badge.visible {
+            display: inline;
+          }
+          .star-rating {
+            display: flex;
+            gap: 5px;
+            cursor: pointer;
+            font-size: 1.5rem;
+            color: #444;
+            margin: 10px 0;
+          }
+          .star-rating .star.active {
+            color: #f1c40f;
+          }
+          .star-rating .star:hover {
+            color: #f39c12;
+          }
+
+          #cart-screen {
+            background: var(--bg);
             }
-          .media-slider > * { scroll-snap-align: start; flex-shrink: 0; max-height: 400px; border-radius: 4px; }
-          .media-slider::-webkit-scrollbar { height: 6px; }
-          .media-slider::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 3px; }
-          #cart-screen { background: var(--bg); }
-          .cart-header { background: var(--bg2); padding: 14px 24px; display: flex; align-items: center; gap: 14px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
-          .cart-header .header-logo { font-family: 'Rajdhani', sans-serif; font-size: 1.6rem; font-weight: 700; letter-spacing: 2px; }
-          .cart-body { flex: 1; overflow-y: auto; padding: 28px 32px; display: flex; flex-direction: column; gap: 14px; }
-          .cart-empty { color: var(--muted); text-align: center; margin-top: 60px; font-size: 1.05rem; }
-          .cart-item { background: var(--card); border: 1px solid var(--border); border-radius: 6px; padding: 14px 18px; display: flex; align-items: center; gap: 16px; }
-          .cart-item img { width: 100px; height: 47px; object-fit: cover; border-radius: 4px; flex-shrink: 0; }
-          .cart-item-info { flex: 1; }
-          .cart-item-title { font-weight: 600; font-size: 0.95rem; margin-bottom: 3px; }
-          .cart-item-genre { color: var(--accent2); font-size: 0.75rem; }
-          .cart-item-remove { background: none; border: 1px solid var(--border); border-radius: 4px; color: var(--muted); cursor: pointer; padding: 5px 10px; font-size: 0.8rem; transition: all .15s; }
-          .cart-item-remove:hover { border-color: #c0392b; color: #e74c3c; }
-          .cart-footer { background: var(--bg2); border-top: 1px solid var(--border); padding: 14px 32px; display: flex; justify-content: flex-end; gap: 10px; flex-shrink: 0; }
-          .cart-icon-btn { background: var(--bg3); border: 1px solid var(--border); border-radius: 4px; color: var(--text); cursor: pointer; padding: 6px 12px; font-size: 1.1rem; position: relative; transition: opacity .15s; }
-          .cart-icon-btn:hover { opacity: .8; }
-          .cart-count-badge { position: absolute; top: -5px; right: -6px; background: var(--accent); color: #fff; border-radius: 50%; font-size: 0.65rem; width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; font-weight: 700; pointer-events: none; }
+          .cart-header {
+            background: var(--bg2);
+            padding: 14px 24px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+          }
+          .cart-header .header-logo {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 1.6rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+          }
+          .cart-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 28px 32px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+          }
+          .cart-empty {
+            color: var(--muted);
+            text-align: center;
+            margin-top: 60px;
+            font-size: 1.05rem;
+          }
+          .cart-item {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 14px 18px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+          }
+          .cart-item img {
+            width: 100px;
+            height: 47px;
+            object-fit: cover;
+            border-radius: 4px;
+            flex-shrink: 0;
+          }
+          .cart-item-info {
+            flex: 1;
+          }
+          .cart-item-title {
+            font-weight: 600;
+            font-size: 0.95rem;
+            margin-bottom: 3px;
+          }
+          .cart-item-genre {
+            color: var(--accent2);
+            font-size: 0.75rem;
+          }
+          .cart-item-remove {
+            background: none;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            color: var(--muted);
+            cursor: pointer;
+            padding: 5px 10px;
+            font-size: 0.8rem;
+            transition: all .15s;
+          }
+          .cart-item-remove:hover {
+            border-color: #c0392b;
+            color: #e74c3c;
+          }
+          .cart-footer {
+            background: var(--bg2);
+            border-top: 1px solid var(--border);
+            padding: 14px 32px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            flex-shrink: 0;
+          }
+          .cart-icon-btn {
+            background: var(--bg3);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            color: var(--text);
+            cursor: pointer;
+            padding: 6px 12px;
+            font-size: 1.1rem;
+            position: relative;
+            transition: opacity .15s;
+          }
+          .cart-icon-btn:hover {
+            opacity: .8;
+          }
+          .cart-count-badge {
+            position: absolute;
+            top: -5px;
+            right: -6px;
+            background: var(--accent);
+            color: #fff;
+            border-radius: 50%;
+            font-size: 0.65rem;
+            width: 16px;
+            height: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            pointer-events: none;
+          }
           .star-picker { display: flex; gap: 6px; font-size: 1.8rem; cursor: pointer; margin: 4px 0 8px; }
           .star-picker .sp { color: #444; transition: color .1s; user-select: none; }
           .star-picker .sp.lit { color: #f1c40f; }
@@ -400,33 +683,38 @@
           .review-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px; }
           .review-card-user { font-size: 0.8rem; font-weight: 600; color: var(--accent); }
           .review-card-comment { font-size: 0.82rem; color: var(--muted); line-height: 1.5; }
-          .media-slider-wrap { position: relative; background: #000; border-radius: 6px; overflow: hidden; }
-          .media-slider { display: flex; gap: 0; overflow-x: auto; scroll-snap-type: x mandatory; scroll-behavior: smooth; }
-          .media-slider::-webkit-scrollbar { display: none; }
           .media-slider-wrap {
-                border-radius: 6px;
-                overflow: hidden;
-                background: transparent;
-            }
-
+            position: relative;
+            background: #000;
+            border-radius: 0;
+            overflow: hidden;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+          }
           .media-slider {
-              display: flex;
-              overflow-x: auto;
-              scroll-snap-type: x mandatory;
-            }
-
+            flex: 1;
+            display: flex;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            scroll-behavior: smooth;
+            min-height: 0;
+          }
+          .media-slider::-webkit-scrollbar { display: none; }
           .media-slide {
-              min-width: 100%;
-              aspect-ratio: 16 / 9;
-            }
-
+            min-width: 100%;
+            flex-shrink: 0;
+            scroll-snap-align: start;
+            display: flex;
+          }
           .media-slide video,
           .media-slide img {
-              width: 100%;
-              height: 100%;
-              object-fit: cover;
-              display: block;
-            }
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+          }
           .slider-btn { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,.6); border: none; color: #fff; font-size: 1.4rem; cursor: pointer; padding: 8px 14px; z-index: 10; border-radius: 3px; transition: background .15s; }
           .slider-btn:hover { background: rgba(70,130,180,.8); }
           .slider-btn.prev { left: 6px; }
@@ -434,6 +722,35 @@
           .slider-dots { display: flex; justify-content: center; gap: 6px; padding: 6px 0; background: #000; }
           .slider-dot { width: 7px; height: 7px; border-radius: 50%; background: #444; cursor: pointer; transition: background .15s; }
           .slider-dot.active { background: var(--accent); }
+
+          .profile-header { background: var(--bg2); padding: 14px 24px; display: flex; align-items: center; gap: 14px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+          .profile-body { flex: 1; overflow-y: auto; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; padding: 40px; }
+          .profile-avatar { width: 90px; height: 90px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 2.4rem; color: #fff; font-weight: 700; flex-shrink: 0; }
+          .profile-username { font-family: 'Rajdhani', sans-serif; font-size: 1.8rem; font-weight: 700; letter-spacing: 1px; }
+          .profile-role { font-size: 0.82rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; background: var(--bg3); border: 1px solid var(--border); border-radius: 20px; padding: 3px 12px; }
+          .profile-footer { background: var(--bg2); border-top: 1px solid var(--border); padding: 14px 32px; display: flex; justify-content: flex-end; gap: 10px; flex-shrink: 0; }
+
+          .profile-icon-wrap { position: relative; }
+          .profile-icon-btn { width: 36px; height: 36px; border-radius: 50%; background: var(--accent); border: 2px solid transparent; color: #fff; font-weight: 700; font-size: 0.95rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: border-color .15s, opacity .15s; font-family: 'Inter', sans-serif; }
+          .profile-icon-btn:hover { border-color: #fff; opacity: .9; }
+          .profile-dropdown { position: absolute; top: calc(100% + 8px); right: 0; background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; min-width: 160px; z-index: 500; box-shadow: 0 8px 24px rgba(0,0,0,.5); overflow: hidden; display: none; }
+          .profile-dropdown.open { display: block; }
+          .profile-dropdown-user { padding: 12px 16px 10px; border-bottom: 1px solid var(--border); }
+          .profile-dropdown-user .pd-name { font-weight: 600; font-size: 0.9rem; }
+          .profile-dropdown-user .pd-role { font-size: 0.74rem; color: var(--muted); margin-top: 1px; }
+          .profile-dropdown a, .profile-dropdown button.pd-item { display: flex; align-items: center; gap: 10px; padding: 10px 16px; font-size: 0.86rem; color: var(--text); background: none; border: none; width: 100%; text-align: left; cursor: pointer; font-family: 'Inter', sans-serif; transition: background .12s; }
+          .profile-dropdown a:hover, .profile-dropdown button.pd-item:hover { background: var(--bg); }
+          .pd-logout { color: #e74c3c !important; border-top: 1px solid var(--border); }
+
+          .game-price-box { display: flex; align-items: center; justify-content: space-between; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 10px 14px; margin-top: 4px; }
+          .game-price-label { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+          .game-price-value { font-family: 'Rajdhani', sans-serif; font-size: 1.5rem; font-weight: 700; color: #fff; }
+
+          .cart-total-row { display: flex; align-items: center; justify-content: space-between; padding: 14px 0 0; border-top: 1px solid var(--border); margin-top: 8px; }
+          .cart-total-label { font-size: 0.82rem; color: var(--muted); }
+          .cart-total-value { font-family: 'Rajdhani', sans-serif; font-size: 1.6rem; font-weight: 700; }
+          .btn-buy { background: linear-gradient(135deg, #27ae60, #2ecc71); color: #fff; font-size: 1rem; padding: 12px 32px; border-radius: 6px; font-weight: 700; letter-spacing: 0.5px; }
+          .btn-buy:hover { opacity: .9; }
         `;
         document.head.appendChild(style);
     const AuthService = (() => {
@@ -446,11 +763,24 @@
             if (usernames[i] === username && passwords[i] === password) return roles[i];
           return "invalid";
         },
-        addUser(username, password, role) { usernames.push(username); passwords.push(password); roles.push(role); },
-        userExists(username) { return usernames.includes(username); },
-        removeUser(username) { const i=usernames.indexOf(username); if(i!==-1){usernames.splice(i,1);passwords.splice(i,1);roles.splice(i,1);} },
-        changePassword(username, newPassword) { const i=usernames.indexOf(username); if(i!==-1) passwords[i]=newPassword; },
-        getAllUsers() { return usernames.map((u,i)=>`Username: ${u} | Role: ${roles[i]}`).join("\n"); }
+        addUser(username, password, role) { usernames.push(username);
+        passwords.push(password);
+        roles.push(role); }, userExists(username) {
+            return usernames.includes(username);
+        },
+        removeUser(username) {
+            const i=usernames.indexOf(username);
+                if(i!==-1){usernames.splice(i,1);
+                passwords.splice(i,1);
+                roles.splice(i,1);}
+              },
+        changePassword(username, newPassword) {
+            const i=usernames.indexOf(username);
+                if(i!==-1) passwords[i]=newPassword;
+                },
+        getAllUsers() {
+            return usernames.map((u,i)=>`Username: ${u} | Role: ${roles[i]}`).join("\n");
+          }
       };
     })();
 
@@ -525,8 +855,8 @@
     })();
 
     const GenreService = (() => {
-      const genres = ["Action", "RPG", "Sports", "Shooter", "Sandbox"];
-      const MAX_GENRES = 5;
+      const genres = ["Action", "RPG", "Sports", "Shooter", "Sandbox", "Horror", "FPS"];
+      const MAX_GENRES = 7;
       return {
         addGenre(name) {
           if (genres.length >= MAX_GENRES) return false;
@@ -731,6 +1061,46 @@
         nb.textContent='Notifications'; nb.appendChild(badge); nb.onclick=showNotificationsModal; hr.appendChild(nb);
         updateNotifBadge();
       }
+      const initials = currentUser ? currentUser.slice(0,2).toUpperCase() : '?';
+      const wrap = document.createElement('div'); wrap.className='profile-icon-wrap'; wrap.id='profile-icon-wrap';
+      wrap.innerHTML = `
+        <button class="profile-icon-btn" id="profile-icon-btn" onclick="toggleProfileDropdown(event)">${initials}</button>
+        <div class="profile-dropdown" id="profile-dropdown">
+          <div class="profile-dropdown-user">
+            <div class="pd-name">${currentUser||''}</div>
+            <div class="pd-role">${isAdmin?'Administrator':'Member'}</div>
+          </div>
+          <button class="pd-item" onclick="openProfileScreen()">👤 &nbsp;Profile</button>
+          <button class="pd-item pd-logout" onclick="doLogout()">⏻ &nbsp;Logout</button>
+        </div>`;
+      hr.appendChild(wrap);
+      document.addEventListener('click', closeProfileDropdownOutside);
+    }
+
+    function toggleProfileDropdown(e) {
+      e.stopPropagation();
+      const dd = document.getElementById('profile-dropdown');
+      if(dd) dd.classList.toggle('open');
+    }
+
+    function closeProfileDropdownOutside(e) {
+      const wrap = document.getElementById('profile-icon-wrap');
+      if(wrap && !wrap.contains(e.target)) {
+        const dd = document.getElementById('profile-dropdown');
+        if(dd) dd.classList.remove('open');
+      }
+    }
+
+    function openProfileScreen() {
+      const dd = document.getElementById('profile-dropdown');
+      if(dd) dd.classList.remove('open');
+      showScreen('profile-screen');
+      const body = document.getElementById('profile-body');
+      const initials = currentUser ? currentUser.slice(0,2).toUpperCase() : '?';
+      body.innerHTML = `
+        <div class="profile-avatar">${initials}</div>
+        <div class="profile-username">${escHtml(currentUser||'')}</div>
+        <div class="profile-role">${isAdmin ? 'Administrator' : 'Member'}</div>`;
     }
 
     function updateNotifBadge() {
@@ -763,13 +1133,54 @@
   Promise.all(promises).then(results=>{
     document.getElementById('placeholder-section')?.remove();
 
+    const GENRE_MAP = {
+      'action':        'Action',
+      'rpg':           'RPG',
+      'role-playing':  'RPG',
+      'sports':        'Sports',
+      'racing':        'Sports',
+      'shooter':       'Shooter',
+      'first-person':  'FPS',
+      'fps':           'FPS',
+      'tactical':      'Shooter',
+      'sandbox':       'Sandbox',
+      'open world':    'Sandbox',
+      'survival':      'Sandbox',
+      'horror':        'Horror',
+      'psychological horror': 'Horror',
+      'strategy':      'Strategy',
+      'simulation':    'Simulation',
+      'adventure':     'Adventure',
+      'indie':         'Indie',
+      'puzzle':        'Puzzle',
+      'fighting':      'Fighting',
+      'free to play':  'Free To Play',
+      'massively multiplayer': 'Multiplayer',
+    };
+
+    const ourGenres = GenreService.getGenreList().map(g => g.toLowerCase());
+
+    function mapGenre(steamGenre) {
+      const lower = steamGenre.toLowerCase();
+      if (ourGenres.includes(lower)) return steamGenre;
+      for (const [key, val] of Object.entries(GENRE_MAP)) {
+        if (lower.includes(key)) return val;
+      }
+      return null;
+    }
+
     const genreMap={};
     results.forEach(({ appID, game }) => {
         if (!game) return;
-            const gameGenres = game.genres.length ? game.genres : ["Other"];
-            gameGenres.forEach(genre => {
-        if (!genreMap[genre]) genreMap[genre] = [];
-            genreMap[genre].push({ appID, game });
+        const mapped = new Set();
+        (game.genres.length ? game.genres : ['Other']).forEach(g => {
+          const m = mapGenre(g);
+          if (m) mapped.add(m);
+        });
+        if (mapped.size === 0) mapped.add('Other');
+        mapped.forEach(genre => {
+          if (!genreMap[genre]) genreMap[genre] = [];
+          genreMap[genre].push({ appID, game });
         });
       });
 
@@ -853,13 +1264,33 @@
       else badge.style.display='none';
     }
 
+    const DUMMY_PRICES = [9.99,14.99,19.99,24.99,29.99,39.99,49.99,59.99];
+    function getItemPrice(id) { return DUMMY_PRICES[id % DUMMY_PRICES.length]; }
+
+    function refreshCartTotal() {
+      const items = WishlistService.getWishlistItems(currentUser);
+      const total = items.reduce((sum, it) => sum + getItemPrice(it.id), 0);
+      const totalRow = document.getElementById('cart-total-row');
+      const totalVal = document.getElementById('cart-total-value');
+      const buyBtn = document.getElementById('cart-buy-btn');
+      if(items.length > 0) {
+        if(totalRow) { totalRow.style.display='flex'; }
+        if(totalVal) totalVal.textContent = '$' + total.toFixed(2);
+        if(buyBtn) buyBtn.style.display='inline-flex';
+      } else {
+        if(totalRow) totalRow.style.display='none';
+        if(buyBtn) buyBtn.style.display='none';
+      }
+    }
+
     function openCartScreen() {
       showScreen('cart-screen');
       const body=document.getElementById('cart-body');
       const items=WishlistService.getWishlistItems(currentUser);
-      if(!items.length){ body.innerHTML='<div class="cart-empty">Your cart is empty.</div>'; return; }
+      if(!items.length){ body.innerHTML='<div class="cart-empty">Your cart is empty.</div>'; refreshCartTotal(); return; }
       body.innerHTML='';
       items.forEach(item=>{
+        const price = getItemPrice(item.id);
         const div=document.createElement('div'); div.className='cart-item';
         div.innerHTML=`
           ${item.image?`<img src="${item.image}" alt="${escHtml(item.title)}"/>`:''}
@@ -867,9 +1298,11 @@
             <div class="cart-item-title">${escHtml(item.title)}</div>
             <div class="cart-item-genre">${escHtml(item.genre||'')}</div>
           </div>
+          <div style="font-family:'Rajdhani',sans-serif;font-size:1.2rem;font-weight:700;margin-right:10px;white-space:nowrap;">$${price.toFixed(2)}</div>
           <button class="cart-item-remove" onclick="removeCartItem(${item.id}, this)">Remove</button>`;
         body.appendChild(div);
       });
+      refreshCartTotal();
     }
 
     function removeCartItem(gameId, btn) {
@@ -878,12 +1311,14 @@
       updateCartBadge();
       const body=document.getElementById('cart-body');
       if(!body.querySelector('.cart-item')) body.innerHTML='<div class="cart-empty">Your cart is empty.</div>';
+      refreshCartTotal();
     }
 
     function clearCart() {
       WishlistService.clearWishlist(currentUser);
       updateCartBadge();
       document.getElementById('cart-body').innerHTML='<div class="cart-empty">Your cart is empty.</div>';
+      refreshCartTotal();
     }
 
     function showAddGameModal() {
@@ -932,7 +1367,7 @@
       openModal(`
         <h3>Manage Genres</h3>
         <div class="modal-pre">${escHtml(list)}</div>
-        <div style="font-size:0.78rem;color:var(--muted);">Remaining slots: ${slots} / 5</div>
+        <div style="font-size:0.78rem;color:var(--muted);">Remaining slots: ${slots} / 7</div>
         <div><label>Add Genre</label><input id="genre-add-name" placeholder="Genre name"/></div>
         <div><label>Remove Genre</label><input id="genre-rm-name" placeholder="Genre name"/></div>
         <div class="modal-actions">
@@ -969,7 +1404,6 @@
       const id=parseInt(document.getElementById('rev-approve-id').value);
       const ok=ReviewService.approveReview(id);
       closeModal(); showToast(ok?'Review approved!':'Review not found.');
-      // Refresh reviews if on game screen
       const rc=document.getElementById('reviews-container');
       if(rc&&window._currentGameAppID) rc.innerHTML=buildReviewsHtml(window._currentGameAppID);
     }
@@ -1015,33 +1449,51 @@
         </div>`).join('')+'</div>';
     }
 
+    function attachTrailer(hlsUrl) {
+      const vid = document.getElementById('game-trailer');
+      if (!vid || !hlsUrl) return;
+      if (Hls.isSupported()) {
+        const hls = new Hls();
+        hls.loadSource(hlsUrl);
+        hls.attachMedia(vid);
+        hls.on(Hls.Events.MANIFEST_PARSED, () => { vid.play().catch(()=>{}); });
+        hls.on(Hls.Events.ERROR, (e, d) => console.error('[CLOUD5] HLS error', d));
+      } else if (vid.canPlayType('application/vnd.apple.mpegurl')) {
+        vid.src = hlsUrl;
+        vid.play().catch(()=>{});
+      } else {
+        console.warn('[CLOUD5] HLS not supported in this browser');
+      }
+    }
+
     function buildMediaSlider(game) {
   const slides = [];
+  let hlsUrl = null;
 
-  let videoUrl = null;
+  if (game.movies && game.movies.length > 0) {
+    const movie = game.movies[0];
+    if (movie.hls_h264)  hlsUrl = movie.hls_h264;
 
-if (game.movies && game.movies.length > 0) {
-  const movie = game.movies[0];
+    let directUrl = null;
+    if (!hlsUrl) {
+      if (movie.mp4)  directUrl = (typeof movie.mp4  === 'string') ? movie.mp4  : movie.mp4['max']  || movie.mp4['480']  || null;
+      if (!directUrl && movie.webm) directUrl = (typeof movie.webm === 'string') ? movie.webm : movie.webm['max'] || movie.webm['480'] || null;
+      if (!directUrl && movie.url) directUrl = movie.url;
+    }
 
-  if (movie.webm && movie.webm.max) {
-    videoUrl = movie.webm.max;
-  } else if (movie.webm && movie.webm["480"]) {
-    videoUrl = movie.webm["480"];
-  } else if (movie.mp4 && movie.mp4.max) {
-    videoUrl = movie.mp4.max;
-  } else if (movie.mp4 && movie.mp4["480"]) {
-    videoUrl = movie.mp4["480"];
-  }
-}
-
-console.log("Trailer URL:", videoUrl);
-
-  if (videoUrl) {
-    slides.push(
-      '<div class="media-slide">' +
-        '<video controls autoplay muted src="' + videoUrl + '"></video>' +
-      '</div>'
-    );
+    if (hlsUrl) {
+      slides.push(
+        '<div class="media-slide">' +
+          '<video id="game-trailer" controls muted playsinline preload="auto"></video>' +
+        '</div>'
+      );
+    } else if (directUrl) {
+      slides.push(
+        '<div class="media-slide">' +
+          '<video id="game-trailer" controls autoplay muted playsinline preload="auto" src="' + directUrl + '"></video>' +
+        '</div>'
+      );
+    }
   }
 
   if (game.screenshots && game.screenshots.length > 0) {
@@ -1074,18 +1526,18 @@ console.log("Trailer URL:", videoUrl);
         slides.join('') +
       '</div>' +
       '<button class="slider-btn next" onclick="sliderNext()">&#8250;</button>' +
-      '<div class="slider-dots">' + dots + '</div>' +
+      '<div class="slider-dots" id="slider-dots">' + dots + '</div>' +
     '</div>'
   );
 }
 
     let _sliderIndex=0;
     function updateDots() {
-  document.querySelectorAll('#slider-dots .slider-dot')
-    .forEach((dot, i) => {
-      dot.classList.toggle('active', i === _sliderIndex);
-    });
-}
+      document.querySelectorAll('#slider-dots .slider-dot')
+        .forEach((dot, i) => {
+          dot.classList.toggle('active', i === _sliderIndex);
+        });
+    }
 
 function sliderGo(i) {
   const slider = document.getElementById('media-slider');
@@ -1126,8 +1578,21 @@ function sliderNext() {
 
       document.getElementById('game-left').innerHTML=buildMediaSlider(game);
 
+      if (game.movies && game.movies.length > 0 && game.movies[0].hls_h264) {
+        attachTrailer(game.movies[0].hls_h264);
+      }
+
+      const dummyPrices = [9.99,14.99,19.99,24.99,29.99,39.99,49.99,59.99];
+      const dummyPrice = dummyPrices[appID % dummyPrices.length].toFixed(2);
+
       document.getElementById('game-right').innerHTML=`
         <img src="${game.imageURL}" alt="${escHtml(game.name)}"/>
+        <div class="game-price-box">
+          <div>
+            <div class="game-price-label">Price</div>
+            <div class="game-price-value">$${dummyPrice}</div>
+          </div>
+        </div>
         <div class="game-right-desc">${escHtml(game.description)}</div>
         <div class="game-right-tags">${game.genres.map(g=>'#'+g).join('   ')}</div>
         <div style="margin-top:6px;font-size:0.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;font-weight:600;">Reviews</div>
@@ -1174,7 +1639,6 @@ function sliderNext() {
           <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
           <button class="btn btn-primary" onclick="doSubmitReview(${gameId}, '${gameTitle.replace(/'/g,"\\'")}')">Submit</button>
         </div>`);
-      // Wire up star picker
       const stars=document.querySelectorAll('#star-picker .sp');
       stars.forEach(star=>{
         star.addEventListener('mouseenter',()=>{
