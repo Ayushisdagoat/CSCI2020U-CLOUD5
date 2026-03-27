@@ -42,6 +42,18 @@
     <div class="game-footer" id="game-footer"></div>
 </div>
 
+<div id="cart-screen" class="screen">
+    <div class="cart-header">
+        <div class="header-logo">CLOUD5</div>
+        <span style="color:var(--muted);font-size:0.9rem;">My Cart</span>
+    </div>
+    <div class="cart-body" id="cart-body"></div>
+    <div class="cart-footer">
+        <button class="btn btn-ghost" onclick="openCatalog()">← Continue Shopping</button>
+        <button class="btn btn-danger" onclick="clearCart()">Clear Cart</button>
+    </div>
+</div>
+
 <div class="modal-overlay hidden" id="modal-overlay">
     <div class="modal" id="modal-box"></div>
 </div>
@@ -139,6 +151,82 @@
           .toast.show { opacity: 1; transform: translateY(0); }
           .notif-badge { background: var(--accent2); color: #fff; border-radius: 50%; font-size: 0.7rem; padding: 1px 5px; margin-left: 4px; vertical-align: middle; display: none; }
           .notif-badge.visible { display: inline; }
+          .star-rating { display: flex; gap: 5px; cursor: pointer; font-size: 1.5rem; color: #444; margin: 10px 0; }
+          .star-rating .star.active { color: #f1c40f; }
+          .star-rating .star:hover { color: #f39c12; }
+          .media-slider {
+                display: flex; gap: 10px; overflow-x: auto; padding: 10px 0;
+                scroll-snap-type: x mandatory; background: #000; border-radius: 6px;
+            }
+          .media-slider > * { scroll-snap-align: start; flex-shrink: 0; max-height: 400px; border-radius: 4px; }
+          .media-slider::-webkit-scrollbar { height: 6px; }
+          .media-slider::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 3px; }
+          /* ── Cart page ── */
+          #cart-screen { background: var(--bg); }
+          .cart-header { background: var(--bg2); padding: 14px 24px; display: flex; align-items: center; gap: 14px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+          .cart-header .header-logo { font-family: 'Rajdhani', sans-serif; font-size: 1.6rem; font-weight: 700; letter-spacing: 2px; }
+          .cart-body { flex: 1; overflow-y: auto; padding: 28px 32px; display: flex; flex-direction: column; gap: 14px; }
+          .cart-empty { color: var(--muted); text-align: center; margin-top: 60px; font-size: 1.05rem; }
+          .cart-item { background: var(--card); border: 1px solid var(--border); border-radius: 6px; padding: 14px 18px; display: flex; align-items: center; gap: 16px; }
+          .cart-item img { width: 100px; height: 47px; object-fit: cover; border-radius: 4px; flex-shrink: 0; }
+          .cart-item-info { flex: 1; }
+          .cart-item-title { font-weight: 600; font-size: 0.95rem; margin-bottom: 3px; }
+          .cart-item-genre { color: var(--accent2); font-size: 0.75rem; }
+          .cart-item-remove { background: none; border: 1px solid var(--border); border-radius: 4px; color: var(--muted); cursor: pointer; padding: 5px 10px; font-size: 0.8rem; transition: all .15s; }
+          .cart-item-remove:hover { border-color: #c0392b; color: #e74c3c; }
+          .cart-footer { background: var(--bg2); border-top: 1px solid var(--border); padding: 14px 32px; display: flex; justify-content: flex-end; gap: 10px; flex-shrink: 0; }
+          /* ── Cart icon button ── */
+          .cart-icon-btn { background: var(--bg3); border: 1px solid var(--border); border-radius: 4px; color: var(--text); cursor: pointer; padding: 6px 12px; font-size: 1.1rem; position: relative; transition: opacity .15s; }
+          .cart-icon-btn:hover { opacity: .8; }
+          .cart-count-badge { position: absolute; top: -5px; right: -6px; background: var(--accent); color: #fff; border-radius: 50%; font-size: 0.65rem; width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; font-weight: 700; pointer-events: none; }
+          /* ── Star rating widget ── */
+          .star-picker { display: flex; gap: 6px; font-size: 1.8rem; cursor: pointer; margin: 4px 0 8px; }
+          .star-picker .sp { color: #444; transition: color .1s; user-select: none; }
+          .star-picker .sp.lit { color: #f1c40f; }
+          /* ── Review stars display ── */
+          .review-stars { color: #f1c40f; font-size: 0.85rem; letter-spacing: 1px; }
+          .review-stars .dim { color: #444; }
+          /* ── Review cards ── */
+          .reviews-section { display: flex; flex-direction: column; gap: 8px; }
+          .review-card { background: var(--bg); border: 1px solid var(--border); border-radius: 5px; padding: 9px 12px; }
+          .review-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px; }
+          .review-card-user { font-size: 0.8rem; font-weight: 600; color: var(--accent); }
+          .review-card-comment { font-size: 0.82rem; color: var(--muted); line-height: 1.5; }
+          /* ── Media slider ── */
+          .media-slider-wrap { position: relative; background: #000; border-radius: 6px; overflow: hidden; }
+          .media-slider { display: flex; gap: 0; overflow-x: auto; scroll-snap-type: x mandatory; scroll-behavior: smooth; }
+          .media-slider::-webkit-scrollbar { display: none; }
+          .media-slider-wrap {
+                border-radius: 6px;
+                overflow: hidden;
+                background: transparent;
+            }
+
+          .media-slider {
+              display: flex;
+              overflow-x: auto;
+              scroll-snap-type: x mandatory;
+            }
+
+          .media-slide {
+              min-width: 100%;
+              aspect-ratio: 16 / 9;
+            }
+
+          .media-slide video,
+          .media-slide img {
+              width: 100%;
+              height: 100%;
+              object-fit: cover;
+              display: block;
+            }
+          .slider-btn { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,.6); border: none; color: #fff; font-size: 1.4rem; cursor: pointer; padding: 8px 14px; z-index: 10; border-radius: 3px; transition: background .15s; }
+          .slider-btn:hover { background: rgba(70,130,180,.8); }
+          .slider-btn.prev { left: 6px; }
+          .slider-btn.next { right: 6px; }
+          .slider-dots { display: flex; justify-content: center; gap: 6px; padding: 6px 0; background: #000; }
+          .slider-dot { width: 7px; height: 7px; border-radius: 50%; background: #444; cursor: pointer; transition: background .15s; }
+          .slider-dot.active { background: var(--accent); }
         `;
         document.head.appendChild(style);
     const AuthService = (() => {
@@ -319,35 +407,50 @@
           for(let i=0;i<reviewIds.length;i++)
             if(gameIds[i]===gameId&&approved[i]) lines.push(`User: ${usernames[i]} | Rating: ${ratings[i]} | Comment: ${comments[i]}`);
           return lines.length ? lines.join("\n") : "No reviews yet.";
+        },
+        getApprovedReviewsData(gameId) {
+          const items=[];
+          for(let i=0;i<reviewIds.length;i++)
+            if(gameIds[i]===gameId&&approved[i]) items.push({user:usernames[i],rating:ratings[i],comment:comments[i]});
+          return items;
         }
       };
     })();
 
     const WishlistService = (() => {
-      const usernames=[],gameIds=[],gameTitles=[];
+      const usernames=[],gameIds=[],gameTitles=[],gameImages=[],gameGenres=[];
       return {
-        addToWishlist(username, gameId, gameTitle) {
+        addToWishlist(username, gameId, gameTitle, imageURL='', genre='') {
           if(this.isInWishlist(username,gameId)) return false;
-          usernames.push(username); gameIds.push(gameId); gameTitles.push(gameTitle); return true;
+          usernames.push(username); gameIds.push(gameId); gameTitles.push(gameTitle);
+          gameImages.push(imageURL); gameGenres.push(genre); return true;
         },
         removeFromWishlist(username, gameId) {
           for(let i=0;i<usernames.length;i++)
-            if(usernames[i]===username&&gameIds[i]===gameId){usernames.splice(i,1);gameIds.splice(i,1);gameTitles.splice(i,1);return true;}
+            if(usernames[i]===username&&gameIds[i]===gameId){
+              usernames.splice(i,1);gameIds.splice(i,1);gameTitles.splice(i,1);
+              gameImages.splice(i,1);gameGenres.splice(i,1); return true;}
           return false;
         },
+        getWishlistItems(username) {
+          const items=[];
+          for(let i=0;i<usernames.length;i++)
+            if(usernames[i]===username) items.push({id:gameIds[i],title:gameTitles[i],image:gameImages[i],genre:gameGenres[i]});
+          return items;
+        },
         getWishlist(username) {
-          const lines=[];
-          for(let i=0;i<usernames.length;i++) if(usernames[i]===username) lines.push(`Game ID: ${gameIds[i]} | Title: ${gameTitles[i]}`);
-          return lines.length ? lines.join("\n") : "Wishlist is empty.";
+          const items=this.getWishlistItems(username);
+          return items.length ? items.map(it=>`Game ID: ${it.id} | Title: ${it.title}`).join("\n") : "Wishlist is empty.";
         },
         isInWishlist(username, gameId) {
           for(let i=0;i<usernames.length;i++) if(usernames[i]===username&&gameIds[i]===gameId) return true;
           return false;
         },
         clearWishlist(username) {
-          for(let i=usernames.length-1;i>=0;i--) if(usernames[i]===username){usernames.splice(i,1);gameIds.splice(i,1);gameTitles.splice(i,1);}
+          for(let i=usernames.length-1;i>=0;i--) if(usernames[i]===username){usernames.splice(i,1);gameIds.splice(i,1);gameTitles.splice(i,1);gameImages.splice(i,1);gameGenres.splice(i,1);}
           return true;
-        }
+        },
+        getCount(username) { return usernames.filter(u=>u===username).length; }
       };
     })();
 
@@ -400,7 +503,10 @@
     function buildHeaderRight() {
       const hr=document.getElementById('header-right'); hr.innerHTML='';
       if(!isAdmin){
-        const b=document.createElement('button'); b.className='btn btn-ghost'; b.textContent='Cart'; b.onclick=showCart; hr.appendChild(b);
+        const b=document.createElement('button'); b.className='cart-icon-btn'; b.id='cart-icon-btn';
+        b.innerHTML='🛒<span class="cart-count-badge" id="cart-count-badge" style="display:none"></span>';
+        b.onclick=openCartScreen; hr.appendChild(b);
+        updateCartBadge();
       }
       if(isAdmin){
         const a=document.createElement('button'); a.className='btn btn-primary'; a.textContent='Add Game'; a.onclick=showAddGameModal; hr.appendChild(a);
@@ -489,7 +595,7 @@
         let platform="WEB";
         const p=data.platforms||{};
         if(p.windows) platform="Windows"; else if(p.mac) platform="Mac"; else if(p.linux) platform="Linux";
-        const game={ name:data.name, description:data.short_description, imageURL:data.header_image, platform, genres:(data.genres||[]).map(g=>g.description).slice(0,3), movies:data.movies||[] };
+        const game={ name:data.name, description:data.short_description, imageURL:data.header_image, platform, genres:(data.genres||[]).map(g=>g.description).slice(0,3), movies:data.movies||[], screenshots:data.screenshots||[] };
         gameCache[appID]=game; return game;
       } catch { return null; }
     }
@@ -525,9 +631,44 @@
   }
 }
 
-    function showCart() {
-      const contents=WishlistService.getWishlist(currentUser);
-      openModal(`<h3>My Cart</h3><div class="modal-pre">${escHtml(contents)}</div><div class="modal-actions"><button class="btn btn-ghost" onclick="closeModal()">Close</button></div>`);
+    function updateCartBadge() {
+      const badge=document.getElementById('cart-count-badge'); if(!badge) return;
+      const count=WishlistService.getCount(currentUser);
+      if(count>0){ badge.textContent=count; badge.style.display='flex'; }
+      else badge.style.display='none';
+    }
+
+    function openCartScreen() {
+      showScreen('cart-screen');
+      const body=document.getElementById('cart-body');
+      const items=WishlistService.getWishlistItems(currentUser);
+      if(!items.length){ body.innerHTML='<div class="cart-empty">Your cart is empty.</div>'; return; }
+      body.innerHTML='';
+      items.forEach(item=>{
+        const div=document.createElement('div'); div.className='cart-item';
+        div.innerHTML=`
+          ${item.image?`<img src="${item.image}" alt="${escHtml(item.title)}"/>`:''}
+          <div class="cart-item-info">
+            <div class="cart-item-title">${escHtml(item.title)}</div>
+            <div class="cart-item-genre">${escHtml(item.genre||'')}</div>
+          </div>
+          <button class="cart-item-remove" onclick="removeCartItem(${item.id}, this)">Remove</button>`;
+        body.appendChild(div);
+      });
+    }
+
+    function removeCartItem(gameId, btn) {
+      WishlistService.removeFromWishlist(currentUser, gameId);
+      btn.closest('.cart-item').remove();
+      updateCartBadge();
+      const body=document.getElementById('cart-body');
+      if(!body.querySelector('.cart-item')) body.innerHTML='<div class="cart-empty">Your cart is empty.</div>';
+    }
+
+    function clearCart() {
+      WishlistService.clearWishlist(currentUser);
+      updateCartBadge();
+      document.getElementById('cart-body').innerHTML='<div class="cart-empty">Your cart is empty.</div>';
     }
 
     function showAddGameModal() {
@@ -613,6 +754,9 @@
       const id=parseInt(document.getElementById('rev-approve-id').value);
       const ok=ReviewService.approveReview(id);
       closeModal(); showToast(ok?'Review approved!':'Review not found.');
+      // Refresh reviews if on game screen
+      const rc=document.getElementById('reviews-container');
+      if(rc&&window._currentGameAppID) rc.innerHTML=buildReviewsHtml(window._currentGameAppID);
     }
     function doRejectReview() {
       const id=parseInt(document.getElementById('rev-reject-id').value);
@@ -637,6 +781,120 @@
       closeModal(); updateNotifBadge(); showToast('All notifications marked as read.');
     }
 
+    function starsHtml(rating) {
+      let s='';
+      for(let i=1;i<=5;i++) s+=`<span class="${i<=rating?'':'dim'}">★</span>`;
+      return `<span class="review-stars">${s}</span>`;
+    }
+
+    function buildReviewsHtml(appID) {
+      const items=ReviewService.getApprovedReviewsData(appID);
+      if(!items.length) return '<div style="color:var(--muted);font-size:0.82rem;">No reviews yet.</div>';
+      return '<div class="reviews-section">'+items.map(r=>`
+        <div class="review-card">
+          <div class="review-card-header">
+            <span class="review-card-user">${escHtml(r.user)}</span>
+            ${starsHtml(r.rating)}
+          </div>
+          <div class="review-card-comment">${escHtml(r.comment)}</div>
+        </div>`).join('')+'</div>';
+    }
+
+    function buildMediaSlider(game) {
+  const slides = [];
+
+  let videoUrl = null;
+
+if (game.movies && game.movies.length > 0) {
+  const movie = game.movies[0];
+
+  if (movie.webm && movie.webm.max) {
+    videoUrl = movie.webm.max;
+  } else if (movie.webm && movie.webm["480"]) {
+    videoUrl = movie.webm["480"];
+  } else if (movie.mp4 && movie.mp4.max) {
+    videoUrl = movie.mp4.max;
+  } else if (movie.mp4 && movie.mp4["480"]) {
+    videoUrl = movie.mp4["480"];
+  }
+}
+
+console.log("Trailer URL:", videoUrl);
+
+  if (videoUrl) {
+    slides.push(
+      '<div class="media-slide">' +
+        '<video controls autoplay muted src="' + videoUrl + '"></video>' +
+      '</div>'
+    );
+  }
+
+  if (game.screenshots && game.screenshots.length > 0) {
+    for (let i = 0; i < Math.min(8, game.screenshots.length); i++) {
+      const sc = game.screenshots[i];
+      if (sc && sc.path_full) {
+        slides.push(
+          '<div class="media-slide">' +
+            '<img src="' + sc.path_full + '" loading="lazy"/>' +
+          '</div>'
+        );
+      }
+    }
+  }
+
+  if (slides.length === 0) {
+    return '<div style="color:gray;padding:40px;text-align:center;">No media available</div>';
+  }
+
+  let dots = '';
+  for (let i = 0; i < slides.length; i++) {
+    dots += '<div class="slider-dot' + (i === 0 ? ' active' : '') +
+            '" onclick="sliderGo(' + i + ')"></div>';
+  }
+
+  return (
+    '<div class="media-slider-wrap">' +
+      '<button class="slider-btn prev" onclick="sliderPrev()">&#8249;</button>' +
+      '<div class="media-slider" id="media-slider">' +
+        slides.join('') +
+      '</div>' +
+      '<button class="slider-btn next" onclick="sliderNext()">&#8250;</button>' +
+      '<div class="slider-dots">' + dots + '</div>' +
+    '</div>'
+  );
+}
+
+    let _sliderIndex=0;
+    function updateDots() {
+  document.querySelectorAll('#slider-dots .slider-dot')
+    .forEach((dot, i) => {
+      dot.classList.toggle('active', i === _sliderIndex);
+    });
+}
+
+function sliderGo(i) {
+  const slider = document.getElementById('media-slider');
+  if (!slider) return;
+
+  const count = slider.children.length;
+  _sliderIndex = Math.max(0, Math.min(i, count - 1));
+
+  slider.scrollTo({
+    left: _sliderIndex * slider.clientWidth,
+    behavior: 'smooth'
+  });
+
+  updateDots();
+}
+
+function sliderPrev() {
+  sliderGo(_sliderIndex - 1);
+}
+
+function sliderNext() {
+  sliderGo(_sliderIndex + 1);
+}
+
     async function openGame(appID, gameName) {
       showScreen('game-screen');
       document.getElementById('game-title-bar').textContent='…';
@@ -648,18 +906,17 @@
       if(!game){ document.getElementById('game-title-bar').textContent='Failed to load.'; return; }
 
       document.getElementById('game-title-bar').textContent=game.name;
+      _sliderIndex=0;
+      window._currentGameAppID=appID;
 
-      const leftEl=document.getElementById('game-left');
-      const webm=game.movies?.[0]?.webm?.['480']||game.movies?.[0]?.mp4?.['480']||'';
-      leftEl.innerHTML=webm?`<video controls autoplay muted src="${webm}"></video>`:'<span>Trailer unavailable</span>';
+      document.getElementById('game-left').innerHTML=buildMediaSlider(game);
 
-      const reviews=ReviewService.getApprovedReviews(appID);
       document.getElementById('game-right').innerHTML=`
         <img src="${game.imageURL}" alt="${escHtml(game.name)}"/>
         <div class="game-right-desc">${escHtml(game.description)}</div>
         <div class="game-right-tags">${game.genres.map(g=>'#'+g).join('   ')}</div>
         <div style="margin-top:6px;font-size:0.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;font-weight:600;">Reviews</div>
-        <div class="modal-pre" style="max-height:110px;">${escHtml(reviews)}</div>`;
+        <div id="reviews-container">${buildReviewsHtml(appID)}</div>`;
 
       const footer=document.getElementById('game-footer');
       const backBtn=document.createElement('button');
@@ -672,9 +929,10 @@
         cartBtn.textContent=already?'In Cart':'Add to Cart';
         if(already) cartBtn.disabled=true;
         cartBtn.onclick=()=>{
-          const ok=WishlistService.addToWishlist(currentUser,appID,gameName);
+          const ok=WishlistService.addToWishlist(currentUser,appID,gameName,game.imageURL,game.genres[0]||'');
           showToast(ok?`${gameName} added to cart!`:`${gameName} is already in your cart!`);
           cartBtn.textContent='In Cart'; cartBtn.disabled=true;
+          updateCartBadge();
         };
         footer.appendChild(cartBtn);
 
@@ -687,12 +945,36 @@
     function showReviewModal(gameId, gameTitle) {
       openModal(`
         <h3>Review: ${escHtml(gameTitle)}</h3>
-        <div><label>Rating (1–5)</label><input id="rv-rating" type="number" min="1" max="5"/></div>
+        <label style="font-size:0.78rem;color:var(--muted);">Rating</label>
+        <div class="star-picker" id="star-picker">
+          <span class="sp" data-v="1">★</span>
+          <span class="sp" data-v="2">★</span>
+          <span class="sp" data-v="3">★</span>
+          <span class="sp" data-v="4">★</span>
+          <span class="sp" data-v="5">★</span>
+        </div>
+        <input type="hidden" id="rv-rating" value="0"/>
         <div><label>Comment</label><textarea id="rv-comment"></textarea></div>
         <div class="modal-actions">
           <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
           <button class="btn btn-primary" onclick="doSubmitReview(${gameId}, '${gameTitle.replace(/'/g,"\\'")}')">Submit</button>
         </div>`);
+      // Wire up star picker
+      const stars=document.querySelectorAll('#star-picker .sp');
+      stars.forEach(star=>{
+        star.addEventListener('mouseenter',()=>{
+          const v=+star.dataset.v;
+          stars.forEach(s=>s.classList.toggle('lit',+s.dataset.v<=v));
+        });
+        star.addEventListener('click',()=>{
+          document.getElementById('rv-rating').value=star.dataset.v;
+          stars.forEach(s=>s.classList.toggle('lit',+s.dataset.v<=+star.dataset.v));
+        });
+      });
+      document.getElementById('star-picker').addEventListener('mouseleave',()=>{
+        const cur=+document.getElementById('rv-rating').value;
+        stars.forEach(s=>s.classList.toggle('lit',+s.dataset.v<=cur));
+      });
     }
     function doSubmitReview(gameId, gameTitle) {
       const rating=parseInt(document.getElementById('rv-rating').value);
