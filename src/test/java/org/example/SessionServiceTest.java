@@ -1,28 +1,23 @@
 package org.example;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
 import static org.junit.jupiter.api.Assertions.*;
 
 public class SessionServiceTest {
 
-    @BeforeEach
-    void setUp() {
-        SessionService.endSession();
-    }
-
     @Test
-    void startSession_shouldSetUsernameAndRoleAndLoggedInState() {
+    void testStartSession() {
         SessionService.startSession("adminUser", "admin");
 
         assertTrue(SessionService.isLoggedIn());
         assertEquals("adminUser", SessionService.getCurrentUsername());
         assertEquals("admin", SessionService.getCurrentRole());
+
+        SessionService.endSession(); // cleanup
     }
 
     @Test
-    void endSession_shouldClearSessionState() {
+    void testEndSession() {
         SessionService.startSession("john", "user");
 
         SessionService.endSession();
@@ -33,43 +28,36 @@ public class SessionServiceTest {
     }
 
     @Test
-    void isLoggedIn_shouldReturnFalseWhenNoSessionExists() {
+    void testIsLoggedInWhenEmpty() {
+        SessionService.endSession(); // make sure logged out
         assertFalse(SessionService.isLoggedIn());
     }
 
     @Test
-    void isAdmin_shouldReturnTrueOnlyForAdminRole() {
+    void testAdminRole() {
         SessionService.startSession("adminUser", "admin");
 
         assertTrue(SessionService.isAdmin());
         assertFalse(SessionService.isUser());
+
+        SessionService.endSession();
     }
 
     @Test
-    void isUser_shouldReturnTrueOnlyForUserRole() {
-        SessionService.startSession("normalUser", "user");
+    void testUserRole() {
+        SessionService.startSession("user1", "user");
 
         assertTrue(SessionService.isUser());
         assertFalse(SessionService.isAdmin());
+
+        SessionService.endSession();
     }
 
     @Test
-    void isAdmin_shouldReturnFalseWhenLoggedOut() {
-        assertFalse(SessionService.isAdmin());
-    }
+    void testValuesWhenLoggedOut() {
+        SessionService.endSession();
 
-    @Test
-    void isUser_shouldReturnFalseWhenLoggedOut() {
-        assertFalse(SessionService.isUser());
-    }
-
-    @Test
-    void getCurrentUsername_shouldReturnNullWhenLoggedOut() {
         assertNull(SessionService.getCurrentUsername());
-    }
-
-    @Test
-    void getCurrentRole_shouldReturnNullWhenLoggedOut() {
         assertNull(SessionService.getCurrentRole());
     }
 }

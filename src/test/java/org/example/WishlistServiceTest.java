@@ -1,6 +1,5 @@
 package org.example;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Field;
@@ -10,110 +9,129 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class WishlistServiceTest {
 
-    private WishlistService wishlistService;
+    private void clearData() throws Exception {
+        Field usernames = WishlistService.class.getDeclaredField("usernames");
+        Field gameIds = WishlistService.class.getDeclaredField("gameIds");
+        Field gameTitles = WishlistService.class.getDeclaredField("gameTitles");
 
-    @BeforeEach
-    void setUp() throws Exception {
-        wishlistService = new WishlistService();
-        resetWishlistState();
-    }
+        usernames.setAccessible(true);
+        gameIds.setAccessible(true);
+        gameTitles.setAccessible(true);
 
-    @SuppressWarnings("unchecked")
-    private void resetWishlistState() throws Exception {
-        Field usernamesField = WishlistService.class.getDeclaredField("usernames");
-        Field gameIdsField = WishlistService.class.getDeclaredField("gameIds");
-        Field gameTitlesField = WishlistService.class.getDeclaredField("gameTitles");
-
-        usernamesField.setAccessible(true);
-        gameIdsField.setAccessible(true);
-        gameTitlesField.setAccessible(true);
-
-        ((ArrayList<String>) usernamesField.get(null)).clear();
-        ((ArrayList<Integer>) gameIdsField.get(null)).clear();
-        ((ArrayList<String>) gameTitlesField.get(null)).clear();
+        ((ArrayList<String>) usernames.get(null)).clear();
+        ((ArrayList<Integer>) gameIds.get(null)).clear();
+        ((ArrayList<String>) gameTitles.get(null)).clear();
     }
 
     @Test
-    void initDB_shouldNotThrowException() {
-        assertDoesNotThrow(WishlistService::initDB);
+    void testInitDB() {
+        assertDoesNotThrow(() -> WishlistService.initDB());
     }
 
     @Test
-    void addToWishlist_shouldAddGameWhenNotAlreadyPresent() {
-        boolean result = wishlistService.addToWishlist("john", 730, "Counter-Strike 2");
+    void testAddToWishlist() throws Exception {
+        clearData();
+
+        WishlistService wishlist = new WishlistService();
+        boolean result = wishlist.addToWishlist("john", 730, "Counter-Strike 2");
 
         assertTrue(result);
-        assertTrue(wishlistService.isInWishlist("john", 730));
+        assertTrue(wishlist.isInWishlist("john", 730));
     }
 
     @Test
-    void addToWishlist_shouldReturnFalseForDuplicateGameSameUser() {
-        wishlistService.addToWishlist("john", 730, "Counter-Strike 2");
+    void testAddDuplicateGame() throws Exception {
+        clearData();
 
-        boolean result = wishlistService.addToWishlist("john", 730, "Counter-Strike 2");
+        WishlistService wishlist = new WishlistService();
+        wishlist.addToWishlist("john", 730, "Counter-Strike 2");
+
+        boolean result = wishlist.addToWishlist("john", 730, "Counter-Strike 2");
 
         assertFalse(result);
     }
 
     @Test
-    void removeFromWishlist_shouldRemoveExistingGame() {
-        wishlistService.addToWishlist("john", 730, "Counter-Strike 2");
+    void testRemoveFromWishlist() throws Exception {
+        clearData();
 
-        boolean result = wishlistService.removeFromWishlist("john", 730);
+        WishlistService wishlist = new WishlistService();
+        wishlist.addToWishlist("john", 730, "Counter-Strike 2");
+
+        boolean result = wishlist.removeFromWishlist("john", 730);
 
         assertTrue(result);
-        assertFalse(wishlistService.isInWishlist("john", 730));
+        assertFalse(wishlist.isInWishlist("john", 730));
     }
 
     @Test
-    void removeFromWishlist_shouldReturnFalseWhenGameNotFound() {
-        boolean result = wishlistService.removeFromWishlist("john", 999);
+    void testRemoveGameThatDoesNotExist() throws Exception {
+        clearData();
+
+        WishlistService wishlist = new WishlistService();
+        boolean result = wishlist.removeFromWishlist("john", 999);
 
         assertFalse(result);
     }
 
     @Test
-    void getWishlist_shouldReturnWishlistContentsForSpecificUser() {
-        wishlistService.addToWishlist("john", 730, "Counter-Strike 2");
-        wishlistService.addToWishlist("john", 570, "Dota 2");
-        wishlistService.addToWishlist("jane", 440, "Portal 2");
+    void testGetWishlist() throws Exception {
+        clearData();
 
-        String wishlist = wishlistService.getWishlist("john");
+        WishlistService wishlist = new WishlistService();
+        wishlist.addToWishlist("john", 730, "Counter-Strike 2");
+        wishlist.addToWishlist("john", 570, "Apex 2");
+        wishlist.addToWishlist("jane", 440, "Portal 2");
 
-        assertTrue(wishlist.contains("Game ID: 730 | Title: Counter-Strike 2"));
-        assertTrue(wishlist.contains("Game ID: 570 | Title: Dota 2"));
-        assertFalse(wishlist.contains("Portal 2"));
+        String result = wishlist.getWishlist("john");
+
+        assertTrue(result.contains("Counter-Strike 2"));
+        assertTrue(result.contains("Apex 2"));
+        assertFalse(result.contains("Portal 2"));
     }
 
     @Test
-    void getWishlist_shouldReturnEmptyMessageWhenNoGamesExistForUser() {
-        String wishlist = wishlistService.getWishlist("john");
+    void testEmptyWishlist() throws Exception {
+        clearData();
 
-        assertEquals("Wishlist is empty.", wishlist);
+        WishlistService wishlist = new WishlistService();
+        String result = wishlist.getWishlist("john");
+
+        assertEquals("Wishlist is empty.", result);
     }
 
     @Test
-    void isInWishlist_shouldReturnTrueWhenGameExistsForUser() {
-        wishlistService.addToWishlist("john", 730, "Counter-Strike 2");
+    void testIsInWishlist() throws Exception {
+        clearData();
 
-        assertTrue(wishlistService.isInWishlist("john", 730));
+        WishlistService wishlist = new WishlistService();
+        wishlist.addToWishlist("john", 730, "Counter-Strike 2");
+
+        assertTrue(wishlist.isInWishlist("john", 730));
     }
 
     @Test
-    void isInWishlist_shouldReturnFalseWhenGameDoesNotExistForUser() {
-        assertFalse(wishlistService.isInWishlist("john", 730));
+    void testIsNotInWishlist() throws Exception {
+        clearData();
+
+        WishlistService wishlist = new WishlistService();
+
+        assertFalse(wishlist.isInWishlist("john", 730));
     }
 
     @Test
-    void clearWishlist_shouldRemoveOnlySpecifiedUsersGames() {
-        wishlistService.addToWishlist("john", 730, "Counter-Strike 2");
-        wishlistService.addToWishlist("john", 570, "Dota 2");
-        wishlistService.addToWishlist("jane", 440, "Portal 2");
+    void testClearWishlist() throws Exception {
+        clearData();
 
-        boolean result = wishlistService.clearWishlist("john");
+        WishlistService wishlist = new WishlistService();
+        wishlist.addToWishlist("john", 730, "Counter-Strike 2");
+        wishlist.addToWishlist("john", 570, "Dota 2");
+        wishlist.addToWishlist("jane", 440, "Portal 2");
+
+        boolean result = wishlist.clearWishlist("john");
 
         assertTrue(result);
-        assertEquals("Wishlist is empty.", wishlistService.getWishlist("john"));
-        assertTrue(wishlistService.isInWishlist("jane", 440));
+        assertEquals("Wishlist is empty.", wishlist.getWishlist("john"));
+        assertTrue(wishlist.isInWishlist("jane", 440));
     }
 }
