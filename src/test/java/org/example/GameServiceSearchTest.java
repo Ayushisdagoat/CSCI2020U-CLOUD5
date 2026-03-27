@@ -47,12 +47,43 @@ public class GameServiceSearchTest {
     }
 
     @Test
-    void testSearchPlatformReturnsOnlyPcGames() {
+    void testSearchPlatform() {
         String result = gameService.searchGames("", "PC", "", 0.0);
 
         assertTrue(result.contains("Elden Ring"));
         assertTrue(result.contains("Cyberpunk 2077"));
         assertFalse(result.contains("FIFA 24"));
         assertFalse(result.contains("Call of Duty"));
+    }
+
+    @Test
+    void testSearchByGenre() {
+    String result = gameService.searchGames("", "", "RPG", 0.0);
+
+    assertTrue(result.contains("Elden Ring"));
+    assertTrue(result.contains("Cyberpunk 2077"));
+    assertFalse(result.contains("FIFA 24"));
+    assertFalse(result.contains("Call of Duty"));
+    }
+
+    @Test
+    void testSearchByMinimumRating() {
+    String result = gameService.searchGames("", "", "", 4.5);
+
+    assertTrue(result.contains("Elden Ring"));     // 4.8
+    assertTrue(result.contains("Call of Duty"));   // 4.9
+    assertFalse(result.contains("Cyberpunk 2077")); // 4.2
+    assertFalse(result.contains("FIFA 24"));        // 3.9
+    }
+
+    @Test
+    void testSearchCorrectGame() {
+    String result = gameService.searchGames("Cyber", "PC", "RPG", 4.0);
+
+    assertTrue(result.contains("Cyberpunk 2077"));
+
+    assertFalse(result.contains("Elden Ring"));
+    assertFalse(result.contains("FIFA 24"));
+    assertFalse(result.contains("Call of Duty"));
     }
 }

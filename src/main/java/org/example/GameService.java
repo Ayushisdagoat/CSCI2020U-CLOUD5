@@ -158,6 +158,41 @@ public class GameService {
         return ids; }
 
     public String searchGames(String titleQuery, String platform, String genre, double minRating) {
-    return "";
+
+    if (ids.isEmpty()) return "No games in catalogue.";
+
+    StringBuilder sb = new StringBuilder();
+
+    for (int i = 0; i < ids.size(); i++) {
+
+        boolean matchesTitle =
+                titleQuery == null || titleQuery.equals("")
+                        || titles.get(i).toLowerCase().contains(titleQuery.toLowerCase());
+
+        boolean matchesPlatform =
+                platform == null || platform.equals("")
+                        || platforms.get(i).equalsIgnoreCase(platform);
+
+        boolean matchesGenre =
+                genre == null || genre.equals("")
+                        || genres.get(i).equalsIgnoreCase(genre);
+
+        boolean matchesRating =
+                averageRatings.get(i) >= minRating;
+
+        if (matchesTitle && matchesPlatform && matchesGenre && matchesRating) {
+            sb.append("ID: ").append(ids.get(i))
+                    .append(" | Title: ").append(titles.get(i))
+                    .append(" | Genre: ").append(genres.get(i))
+                    .append(" | Platform: ").append(platforms.get(i))
+                    .append(" | Price: $").append(prices.get(i))
+                    .append(" | Rating: ").append(averageRatings.get(i))
+                    .append("\n");
+        }
+    }
+
+    if (sb.length() == 0) return "No matching games found.";
+
+    return sb.toString();
     }
 }
