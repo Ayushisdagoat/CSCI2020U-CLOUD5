@@ -156,4 +156,8 @@ public class GameService {
 
     public ArrayList<Integer> getAllIds() {
         return ids; }
+
+    public String searchGames(String titleQuery, String platform, String genre, double minRating) {
+    return "";
+    }
 }
