@@ -1052,13 +1052,13 @@
         updateCartBadge();
       }
       if(isAdmin){
-        const a=document.createElement('button'); a.className='btn btn-primary'; a.textContent='Add Game'; a.onclick=showAddGameModal; hr.appendChild(a);
-        const r=document.createElement('button'); r.className='btn btn-danger'; r.textContent='Remove Game'; r.onclick=showRemoveGameModal; hr.appendChild(r);
-        const g=document.createElement('button'); g.className='btn btn-ghost'; g.textContent='Genres'; g.onclick=showGenresModal; hr.appendChild(g);
-        const rv=document.createElement('button'); rv.className='btn btn-ghost'; rv.textContent='Pending Reviews'; rv.onclick=showPendingReviewsModal; hr.appendChild(rv);
+        const a=document.createElement('button'); a.className='btn btn-primary'; a.innerHTML='&#43; Add Game'; a.onclick=showAddGameModal; hr.appendChild(a);
+        const r=document.createElement('button'); r.className='btn btn-danger'; r.innerHTML='&#128465; Remove Game'; r.onclick=showRemoveGameModal; hr.appendChild(r);
+        const g=document.createElement('button'); g.className='btn btn-ghost'; g.innerHTML='&#127890; Genres'; g.onclick=showGenresModal; hr.appendChild(g);
+        const rv=document.createElement('button'); rv.className='btn btn-ghost'; rv.innerHTML='&#9997; Pending Reviews'; rv.onclick=showPendingReviewsModal; hr.appendChild(rv);
         const nb=document.createElement('button'); nb.className='btn btn-ghost'; nb.id='notif-btn';
         const badge=document.createElement('span'); badge.className='notif-badge'; badge.id='notif-badge';
-        nb.textContent='Notifications'; nb.appendChild(badge); nb.onclick=showNotificationsModal; hr.appendChild(nb);
+        nb.innerHTML='&#128276; Notifications'; nb.appendChild(badge); nb.onclick=showNotificationsModal; hr.appendChild(nb);
         updateNotifBadge();
       }
       const initials = currentUser ? currentUser.slice(0,2).toUpperCase() : '?';

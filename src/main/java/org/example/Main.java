@@ -17,11 +17,7 @@ public class Main {
         server.createContext("/", (HttpExchange exchange) -> {
             try {
                 File htmlFile = new File("src/main/resources/index.html");
-                System.out.println("Reading: " + htmlFile.getAbsolutePath());
-
                 byte[] htmlBytes = java.nio.file.Files.readAllBytes(htmlFile.toPath());
-                System.out.println("Bytes read: " + htmlBytes.length);
-
                 exchange.getResponseHeaders().set("Content-Type", "text/html; charset=utf-8");
                 exchange.sendResponseHeaders(200, htmlBytes.length);
                 OutputStream os = exchange.getResponseBody();
@@ -35,7 +31,7 @@ public class Main {
         });
 
         server.start();
-        System.out.println("CLOUD5 started → http://localhost:" + PORT);
+        System.out.println("http://localhost:" + PORT);
         openBrowser("http://localhost:" + PORT);
     }
 
@@ -44,8 +40,6 @@ public class Main {
             String os = System.getProperty("os.name").toLowerCase();
             if (os.contains("win")) {
                 Runtime.getRuntime().exec(new String[]{"rundll32", "url.dll,FileProtocolHandler", url});
-            } else if (os.contains("mac")) {
-                Runtime.getRuntime().exec(new String[]{"open", url});
             } else {
                 Runtime.getRuntime().exec(new String[]{"xdg-open", url});
             }
