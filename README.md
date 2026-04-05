@@ -41,7 +41,7 @@ Users can browse the catalogue, search for games, view game information, and sub
 - HTML
 - CSS
 - JavaScript
-- Node.js / Express
+- Java + Maven
 - SQL or NoSQL Database
 - Git & GitHub
 
@@ -50,33 +50,66 @@ Users can browse the catalogue, search for games, view game information, and sub
 
 ---
 
-## Installation
+## Build and Run Instructions (IMPORTANT)
 
-1. Clone the repository
+### Requirements
+- Java JDK 23 installed  
+- Maven installed  
+
+---
+
+### Run the Project (Windows)
+
+1. Clone the repository:
+
 
 ```
-git clone https://github.com/yourusername/video-game-catalogue.git
+git clone https://github.com/yourusername/CSCI2020U-CLOUD5.git
 ```
 
 2. Navigate to the project folder
 
 ```
-cd video-game-catalogue
+cd CSCI2020U-CLOUD5.git
 ```
 
-3. Install dependencies
+
+3. Double-click:
+
 
 ```
-npm install
+build.bat
 ```
 
-4. Run the application
-
-```
-npm start
-```
 
 ---
+
+### What the Build Script Does
+
+The build script automatically:
+
+- Cleans previous builds  
+- Compiles the project  
+- Runs all unit tests  
+- Launches the application  
+
+---
+
+### 🧪 Manual Commands (Alternative)
+
+If needed, the project can also be run manually:
+```
+mvn clean install
+mvn exec:java -Dexec.mainClass="org.example.FrontEnd"
+```
+---
+
+---
+
+### Login Credentials
+
+- Admin: `admin / admin123`  
+- User: `user / user123`  
 
 ## Usage
 
