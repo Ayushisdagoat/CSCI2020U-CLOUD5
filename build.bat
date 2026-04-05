@@ -3,7 +3,7 @@ echo ==========================
 echo Building CLOUD5 Project...
 echo ==========================
 
-mvn clean install
+call mvn clean install
 
 if %errorlevel% neq 0 (
     echo Build failed!
@@ -15,6 +15,6 @@ echo ==========================
 echo Running Application...
 echo ==========================
 
-mvn exec:java -Dexec.mainClass="org.example.FrontEnd"
+start "" cmd /k "mvn exec:java -Dexec.mainClass=org.example.FrontEnd"
 
 pause
