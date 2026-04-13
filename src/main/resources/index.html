@@ -9,6 +9,7 @@
 </head>
 <body>
 
+
 <div id="login-screen" class="screen">
     <div class="login-logo">CLOUD5</div>
     <div class="login-box">
@@ -23,7 +24,12 @@
 <div id="catalog-screen" class="screen active">
     <div class="header">
         <div class="header-logo">CLOUD5</div>
-        <input type="text" id="search-bar" placeholder="Search games…" oninput="filterCatalog()"/>
+        <div class="search-wrap">
+            <input type="text" id="search-bar" placeholder="Search games…" oninput="filterCatalog()"/>
+            <select id="genre-filter" onchange="filterCatalog()">
+                <option value="">All Genres</option>
+            </select>
+        </div>
         <div class="header-right" id="header-right"></div>
     </div>
     <div class="catalog-body" id="catalog-body">
@@ -80,267 +86,1186 @@
     <div id="support-popup" class="support-hidden">
         <div class="support-header">Contact Support</div>
         <div class="support-row"> <a href="tel:6470000000">647-000-0000</a></div>
-        <div class="support-row"> <a href="mailto:cloud5support@gmail.com">cloud5support@gmail.com</a></div>
+        <div class="support-row"> <a href="mailto:support@cloud5.com">support@cloud5.com</a></div>
     </div>
     <button id="support-btn" onclick="toggleSupportPopup(event)" title="Support">?</button>
 </div>
 
 <script>
+
     const style = document.createElement('style');
     style.textContent = `
       :root {
-        --bg:      #191919;
-        --bg2:     #121212;
-        --bg3:     #232323;
-        --card:    #232323;
-        --border:  #2e2e2e;
-        --text:    #f0f0f0;
-        --muted:   #999;
-        --accent:  #4682B4;
+        --bg: #191919;
+        --bg2: #121212;
+        --bg3: #232323;
+        --card: #232323;
+        --border: #2e2e2e;
+        --text: #f0f0f0;
+        --muted: #999;
+        --accent: #4682B4;
         --accent2: #ff7878;
-        --inp:     #3c3c3c;
+        --inp: #3c3c3c;
       }
-      * { box-sizing: border-box; margin: 0; padding: 0; }
-      body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; height: 100vh; overflow: hidden; }
-      .screen { display: none; }
-      .screen.active { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-      #login-screen { align-items: center; justify-content: center; }
-      .login-logo { font-family: 'Arial', sans-serif; font-size: 3.5rem; font-weight: 700; letter-spacing: 4px; color: #fff; margin-bottom: 2rem; text-align: center; }
-      .login-box { background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 2rem; width: 340px; display: flex; flex-direction: column; gap: 1rem; }
-      .login-box h2 { text-align: center; font-size: 1.3rem; font-weight: 500; }
-      .login-box label { font-size: 0.8rem; color: var(--muted); margin-bottom: 2px; display: block; }
-      .login-box input { width: 100%; background: var(--inp); border: 1px solid var(--border); border-radius: 4px; padding: 8px 10px; color: var(--text); font-size: 0.95rem; outline: none; }
-      .login-box input:focus { border-color: var(--accent); }
-      #login-error { color: var(--accent2); font-size: 0.82rem; text-align: center; display: none; }
-      .btn { border: none; border-radius: 4px; padding: 8px 16px; cursor: pointer; font-family: 'Inter', sans-serif; font-size: 0.88rem; font-weight: 500; transition: opacity .15s; }
-      .btn:hover { opacity: .85; }
-      .btn:disabled { opacity: .45; cursor: default; }
-      .btn-primary { background: var(--accent); color: #fff; }
-      .btn-danger { background: #c0392b; color: #fff; }
-      .btn-ghost { background: var(--bg3); color: var(--text); border: 1px solid var(--border); }
-      .header { background: var(--bg2); padding: 10px 20px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
-      .header-logo { font-family: 'Rajdhani', sans-serif; font-size: 1.6rem; font-weight: 700; letter-spacing: 2px; color: #fff; white-space: nowrap; }
-      .header input[type=text] { flex: 1; max-width: 500px; background: var(--inp); border: 1px solid var(--border); border-radius: 4px; padding: 8px 12px; color: var(--text); font-size: 1rem; outline: none; }
-      .header input[type=text]:focus { border-color: var(--accent); }
-      .header-right { display: flex; gap: 8px; margin-left: auto; }
-      #catalog-screen { background: var(--bg); }
-      .catalog-body { flex: 1; overflow-y: auto; padding: 24px 28px; display: flex; flex-direction: column; gap: 36px; }
-      .genre-section { display: block; }
-      .genre-heading { font-family: 'Rajdhani', sans-serif; font-size: 1.3rem; font-weight: 700; letter-spacing: 1px; color: var(--text); margin-bottom: 14px; padding-bottom: 6px; border-bottom: 2px solid var(--accent); display: inline-block; }
-      .genre-row { display: flex; gap: 16px; overflow-x: auto; padding-bottom: 8px; }
-      .genre-row::-webkit-scrollbar { height: 4px; }
-      .genre-row::-webkit-scrollbar-track { background: var(--bg2); }
-      .genre-row::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
-      .game-card { background: var(--card); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; cursor: pointer; transition: transform .15s, border-color .15s; flex-shrink: 0; width: 240px; }
-      .game-card:hover { transform: translateY(-3px); border-color: var(--accent); }
-      .game-card img { width: 100%; display: block; height: 112px; object-fit: cover; }
-      .card-info { padding: 9px 11px 11px; }
-      .card-title-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; gap: 6px; }
-      .card-title { font-weight: 600; font-size: 0.88rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-      .platform-tag { background: var(--bg); color: var(--muted); font-size: 0.66rem; padding: 2px 6px; border-radius: 3px; border: 1px solid var(--border); flex-shrink: 0; }
-      .card-tags { color: var(--accent2); font-size: 0.72rem; margin-bottom: 5px; }
-      .card-desc { color: var(--muted); font-size: 0.75rem; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-      .search-results { display: none; grid-template-columns: repeat(4,1fr); gap: 16px; }
-      .search-results.active { display: grid; }
-      .search-results .game-card { width: auto; }
-      .search-results .game-card img { height: 130px; }
-      @media(max-width:1100px){ .search-results { grid-template-columns: repeat(3,1fr); } }
-      .card-placeholder { background: var(--card); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; animation: pulse 1.4s infinite; flex-shrink: 0; width: 240px; }
-      .card-placeholder .ph-img { width: 100%; height: 112px; background: #2a2a2a; }
-      .card-placeholder .ph-info { padding: 9px 11px 13px; display: flex; flex-direction: column; gap: 7px; }
-      .card-placeholder .ph-line { height: 11px; border-radius: 3px; background: #2e2e2e; }
-      .ph-short { width: 55%; }
-      @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
-      #game-screen { background: var(--bg); }
-      .game-title-bar { padding: 20px 30px 0; font-family: 'Rajdhani', sans-serif; font-size: 2rem; font-weight: 700; }
-      .game-body { display: flex; gap: 24px; padding: 20px 30px; flex: 1; overflow: hidden; min-height: 0; }
-      .game-left { flex: 1; background: #000; border: 1px solid var(--border); border-radius: 6px; display: flex; flex-direction: column; color: var(--muted); overflow: hidden; min-height: 0; }
-      .game-left video { width: 100%; display: block; }
-      .game-right { width: 380px; flex-shrink: 0; background: var(--bg3); border: 1px solid var(--border); border-radius: 6px; padding: 14px; display: flex; flex-direction: column; gap: 10px; overflow-y: auto; }
-      .game-right img { width: 100%; border-radius: 4px; }
-      .game-right-desc { color: var(--muted); font-size: 0.85rem; line-height: 1.5; }
-      .game-right-tags { color: var(--accent2); font-size: 0.82rem; font-weight: 600; }
-      .game-footer { background: var(--bg2); border-top: 1px solid var(--border); padding: 12px 20px; display: flex; justify-content: center; gap: 10px; flex-shrink: 0; }
-      .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.65); display: flex; align-items: center; justify-content: center; z-index: 1000; }
-      .modal-overlay.hidden { display: none; }
-      .modal { background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 24px; min-width: 320px; max-width: 480px; width: 90%; display: flex; flex-direction: column; gap: 14px; max-height: 90vh; overflow-y: auto; }
-      .modal h3 { font-size: 1.1rem; font-weight: 600; }
-      .modal label { font-size: 0.78rem; color: var(--muted); display: block; margin-bottom: 3px; }
-      .modal input, .modal textarea { width: 100%; background: var(--inp); border: 1px solid var(--border); border-radius: 4px; padding: 7px 10px; color: var(--text); font-family: 'Inter', sans-serif; font-size: 0.9rem; outline: none; }
-      .modal input:focus, .modal textarea:focus { border-color: var(--accent); }
-      .modal textarea { resize: vertical; min-height: 70px; }
-      .modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
-      .modal-pre { background: var(--bg); border: 1px solid var(--border); border-radius: 4px; padding: 10px; font-size: 0.83rem; color: var(--muted); white-space: pre-wrap; word-break: break-word; max-height: 220px; overflow-y: auto; font-family: 'Inter', sans-serif; line-height: 1.6; }
-      .toast { position: fixed; bottom: 24px; right: 24px; background: var(--bg3); border: 1px solid var(--border); border-radius: 6px; padding: 12px 18px; font-size: 0.88rem; color: var(--text); z-index: 2000; opacity: 0; transform: translateY(10px); transition: all .25s; pointer-events: none; }
-      .toast.show { opacity: 1; transform: translateY(0); }
-      .notif-badge { background: var(--accent2); color: #fff; border-radius: 50%; font-size: 0.7rem; padding: 1px 5px; margin-left: 4px; vertical-align: middle; display: none; }
-      .notif-badge.visible { display: inline; }
-      #cart-screen { background: var(--bg); }
-      .cart-header { background: var(--bg2); padding: 14px 24px; display: flex; align-items: center; gap: 14px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
-      .cart-body { flex: 1; overflow-y: auto; padding: 28px 32px; display: flex; flex-direction: column; gap: 14px; }
-      .cart-empty { color: var(--muted); text-align: center; margin-top: 60px; font-size: 1.05rem; }
-      .cart-item { background: var(--card); border: 1px solid var(--border); border-radius: 6px; padding: 14px 18px; display: flex; align-items: center; gap: 16px; }
-      .cart-item img { width: 100px; height: 47px; object-fit: cover; border-radius: 4px; flex-shrink: 0; }
-      .cart-item-info { flex: 1; }
-      .cart-item-title { font-weight: 600; font-size: 0.95rem; margin-bottom: 3px; }
-      .cart-item-genre { color: var(--accent2); font-size: 0.75rem; }
-      .cart-item-remove { background: none; border: 1px solid var(--border); border-radius: 4px; color: var(--muted); cursor: pointer; padding: 5px 10px; font-size: 0.8rem; transition: all .15s; }
-      .cart-item-remove:hover { border-color: #c0392b; color: #e74c3c; }
-      .cart-footer { background: var(--bg2); border-top: 1px solid var(--border); padding: 14px 32px; display: flex; justify-content: flex-end; gap: 10px; flex-shrink: 0; }
-      .cart-icon-btn { background: var(--bg3); border: 1px solid var(--border); border-radius: 4px; color: var(--text); cursor: pointer; padding: 6px 12px; font-size: 1.1rem; position: relative; transition: opacity .15s; }
-      .cart-icon-btn:hover { opacity: .8; }
-      .cart-count-badge { position: absolute; top: -5px; right: -6px; background: var(--accent); color: #fff; border-radius: 50%; font-size: 0.65rem; width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; font-weight: 700; pointer-events: none; }
-      .star-picker { display: flex; gap: 6px; font-size: 1.8rem; cursor: pointer; margin: 4px 0 8px; }
-      .star-picker .sp { color: #444; transition: color .1s; user-select: none; }
-      .star-picker .sp.lit { color: #f1c40f; }
-      .review-stars { color: #f1c40f; font-size: 0.85rem; letter-spacing: 1px; }
-      .review-stars .dim { color: #444; }
-      .reviews-section { display: flex; flex-direction: column; gap: 8px; }
-      .review-card { background: var(--bg); border: 1px solid var(--border); border-radius: 5px; padding: 9px 12px; }
-      .review-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px; }
-      .review-card-user { font-size: 0.8rem; font-weight: 600; color: var(--accent); }
-      .review-card-comment { font-size: 0.82rem; color: var(--muted); line-height: 1.5; }
-      .media-slider-wrap { position: relative; background: #000; border-radius: 0; overflow: hidden; flex: 1; display: flex; flex-direction: column; min-height: 0; }
-      .media-slider { flex: 1; display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scroll-behavior: smooth; min-height: 0; }
-      .media-slider::-webkit-scrollbar { display: none; }
-      .media-slide { min-width: 100%; flex-shrink: 0; scroll-snap-align: start; display: flex; }
-      .media-slide video, .media-slide img { width: 100%; height: 100%; object-fit: cover; display: block; }
-      .slider-btn { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,.6); border: none; color: #fff; font-size: 1.4rem; cursor: pointer; padding: 8px 14px; z-index: 10; border-radius: 3px; transition: background .15s; }
-      .slider-btn:hover { background: rgba(70,130,180,.8); }
-      .slider-btn.prev { left: 6px; }
-      .slider-btn.next { right: 6px; }
-      .slider-dots { display: flex; justify-content: center; gap: 6px; padding: 6px 0; background: #000; }
-      .slider-dot { width: 7px; height: 7px; border-radius: 50%; background: #444; cursor: pointer; transition: background .15s; }
-      .slider-dot.active { background: var(--accent); }
-      .profile-header { background: var(--bg2); padding: 14px 24px; display: flex; align-items: center; gap: 14px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
-      .profile-body { flex: 1; overflow-y: auto; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; padding: 40px; }
-      .profile-avatar { width: 90px; height: 90px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 2.4rem; color: #fff; font-weight: 700; flex-shrink: 0; }
-      .profile-username { font-family: 'Rajdhani', sans-serif; font-size: 1.8rem; font-weight: 700; letter-spacing: 1px; }
-      .profile-role { font-size: 0.82rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; background: var(--bg3); border: 1px solid var(--border); border-radius: 20px; padding: 3px 12px; }
-      .profile-footer { background: var(--bg2); border-top: 1px solid var(--border); padding: 14px 32px; display: flex; justify-content: flex-end; gap: 10px; flex-shrink: 0; }
-      .profile-icon-wrap { position: relative; }
-      .profile-icon-btn { width: 36px; height: 36px; border-radius: 50%; background: var(--accent); border: 2px solid transparent; color: #fff; font-weight: 700; font-size: 0.95rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: border-color .15s, opacity .15s; font-family: 'Inter', sans-serif; }
-      .profile-icon-btn:hover { border-color: #fff; opacity: .9; }
-      .profile-dropdown { position: absolute; top: calc(100% + 8px); right: 0; background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; min-width: 160px; z-index: 500; box-shadow: 0 8px 24px rgba(0,0,0,.5); overflow: hidden; display: none; }
-      .profile-dropdown.open { display: block; }
-      .profile-dropdown-user { padding: 12px 16px 10px; border-bottom: 1px solid var(--border); }
-      .profile-dropdown-user .pd-name { font-weight: 600; font-size: 0.9rem; }
-      .profile-dropdown-user .pd-role { font-size: 0.74rem; color: var(--muted); margin-top: 1px; }
-      .profile-dropdown a, .profile-dropdown button.pd-item { display: flex; align-items: center; gap: 10px; padding: 10px 16px; font-size: 0.86rem; color: var(--text); background: none; border: none; width: 100%; text-align: left; cursor: pointer; font-family: 'Inter', sans-serif; transition: background .12s; }
-      .profile-dropdown a:hover, .profile-dropdown button.pd-item:hover { background: var(--bg); }
-      .pd-logout { color: #e74c3c !important; border-top: 1px solid var(--border); }
-      .game-price-box { display: flex; align-items: center; justify-content: space-between; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 10px 14px; margin-top: 4px; }
-      .game-price-label { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
-      .game-price-value { font-family: 'Rajdhani', sans-serif; font-size: 1.5rem; font-weight: 700; color: #fff; }
-      .cart-total-row { display: flex; align-items: center; justify-content: space-between; padding: 14px 0 0; border-top: 1px solid var(--border); margin-top: 8px; }
-      .cart-total-label { font-size: 0.82rem; color: var(--muted); }
-      .cart-total-value { font-family: 'Rajdhani', sans-serif; font-size: 1.6rem; font-weight: 700; }
-      .btn-buy { background: linear-gradient(135deg, #27ae60, #2ecc71); color: #fff; font-size: 1rem; padding: 12px 32px; border-radius: 6px; font-weight: 700; letter-spacing: 0.5px; }
-      .btn-buy:hover { opacity: .9; }
+      * {
+        box-sizing:border-box;
+        margin:0;
+        padding:0;
+      }
+      body {
+        background:var(--bg);
+        color:var(--text);
+        font-family:'Inter',sans-serif;
+        height:100vh;
+        overflow:hidden;
+      }
+      .screen {
+        display:none;
+      }
+      .screen.active {
+        display:flex;
+        flex-direction:column;
+        height:100vh;
+        overflow:hidden;
+      }
+      #login-screen {
+        align-items:center;
+        justify-content:center;
+      }
+      .login-logo {
+        font-family:'Arial',sans-serif;
+        font-size:3.5rem;
+        font-weight:700;
+        letter-spacing:4px;
+        color:#fff;
+        margin-bottom:2rem;
+        text-align:center;
+      }
+      .login-box {
+        background:var(--bg3);
+        border:1px solid var(--border);
+        border-radius:8px;
+        padding:2rem;
+        width:340px;
+        display:flex;
+        flex-direction:column;
+        gap:1rem;
+      }
+      .login-box h2 {
+        text-align:center;
+        font-size:1.3rem;
+        font-weight:500;
+      }
+      .login-box label {
+        font-size:0.8rem;
+        color:var(--muted);
+        margin-bottom:2px;
+        display:block;
+      }
+      .login-box input {
+        width:100%;
+        background:var(--inp);
+        border:1px solid var(--border);
+        border-radius:4px;
+        padding:8px 10px;
+        color:var(--text);
+        font-size:0.95rem;
+        outline:none;
+      }
+      .login-box input:focus {
+        border-color:var(--accent);
+      }
+      #login-error {
+        color:var(--accent2);
+        font-size:0.82rem;
+        text-align:center;
+        display:none;
+      }
+      .btn {
+        border:none;
+        border-radius:4px;
+        padding:8px 16px;
+        cursor:pointer;
+        font-family:'Inter',sans-serif;
+        font-size:0.88rem;
+        font-weight:500;
+        transition:opacity .15s;
+      }
+      .btn:hover {
+        opacity:.85;
+      }
+      .btn:disabled {
+        opacity:.45;
+        cursor:default;
+      }
+      .btn-primary {
+        background:var(--accent);
+        color:#fff;
+      }
+      .btn-danger  {
+        background:#c0392b;
+        color:#fff;
+      }
+      .btn-ghost   {
+        background:var(--bg3);
+        color:var(--text);
+        border:1px solid var(--border);
+      }
+      .btn-buy     {
+        background:linear-gradient(135deg,#27ae60,#2ecc71);
+        color:#fff;
+        font-size:1rem;
+        padding:12px 32px;
+        border-radius:6px;
+        font-weight:700;
+        letter-spacing:0.5px;
+      }
+      .btn-buy:hover {
+        opacity:.9;
+      }
 
-      /* ── Support Widget ── */
-      #support-widget { position: fixed; bottom: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; pointer-events: none; }
-      #support-btn { pointer-events: all; width: 42px; height: 42px; border-radius: 50%; background: var(--accent); border: 2px solid rgba(255,255,255,.15); color: #fff; font-size: 1.25rem; font-weight: 700; cursor: pointer; box-shadow: 0 4px 16px rgba(0,0,0,.55); transition: transform .15s, opacity .15s; display: flex; align-items: center; justify-content: center; font-family: 'Inter', sans-serif; }
-      #support-btn:hover { transform: scale(1.1); opacity: .9; }
-      #support-popup { pointer-events: all; background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; display: flex; flex-direction: column; gap: 9px; box-shadow: 0 6px 24px rgba(0,0,0,.6); min-width: 240px; }
-      #support-popup.support-hidden { display: none; }
-      .support-header { font-size: 0.82rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
-      .support-row { font-size: 0.85rem; color: var(--text); display: flex; align-items: center; gap: 8px; }
-      .support-row a { color: var(--accent); text-decoration: none; }
-      .support-row a:hover { text-decoration: underline; }
+      .header {
+        background:var(--bg2);
+        padding:10px 20px;
+        display:flex;
+        align-items:center;
+        gap:12px;
+        border-bottom:1px solid var(--border);
+        flex-shrink:0;
+      }
+      .header-logo {
+        font-family:'Rajdhani',sans-serif;
+        font-size:1.6rem;
+        font-weight:700;
+        letter-spacing:2px;
+        color:#fff;
+        white-space:nowrap;
+      }
+      .search-wrap {
+        flex:1;
+        max-width:620px;
+        display:flex;
+        gap:8px;
+      }
+      .search-wrap input[type=text] {
+        flex:1;
+        background:var(--inp);
+        border:1px solid var(--border);
+        border-radius:4px;
+        padding:8px 12px;
+        color:var(--text);
+        font-size:1rem;
+        outline:none;
+        min-width:0;
+      }
+      .search-wrap input[type=text]:focus {
+        border-color:var(--accent);
+      }
+      #genre-filter {
+        background:var(--inp);
+        border:1px solid var(--border);
+        border-radius:4px;
+        padding:8px 10px;
+        color:var(--text);
+        font-size:0.88rem;
+        outline:none;
+        cursor:pointer;
+        flex-shrink:0;
+      }
+      #genre-filter:focus {
+        border-color:var(--accent);
+      }
+      .header-right {
+        display:flex;
+        gap:8px;
+        margin-left:auto;
+      }
 
-      /* ── Catalog card rating ── */
-      .card-rating { display: flex; align-items: center; gap: 5px; margin-top: 5px; }
-      .card-stars { font-size: 0.78rem; letter-spacing: 1px; color: #f1c40f; }
-      .card-stars .dim { color: #333; }
-      .card-rating-label { font-size: 0.7rem; color: var(--muted); }
+      #catalog-screen {
+        background:var(--bg);
+      }
+      .catalog-body {
+        flex:1;
+        overflow-y:auto;
+        padding:24px 28px;
+        display:flex;
+        flex-direction:column;
+        gap:36px;
+      }
+      .genre-section {
+        display:block;
+       }
+      .genre-heading {
+        font-family:'Rajdhani',sans-serif;
+        font-size:1.3rem;
+        font-weight:700;
+        letter-spacing:1px;
+        color:var(--text);
+        margin-bottom:14px;
+        padding-bottom:6px;
+        border-bottom:2px solid var(--accent);
+        display:inline-block;
+      }
+      .genre-row {
+        display:flex;
+        gap:16px;
+        overflow-x:auto;
+        padding-bottom:8px;
+      }
+      .genre-row::-webkit-scrollbar {
+        height:4px;
+      }
+      .genre-row::-webkit-scrollbar-track {
+        background:var(--bg2);
+      }
+      .genre-row::-webkit-scrollbar-thumb {
+        background:var(--border);
+        border-radius:2px;
+      }
+
+      .game-card {
+        background:var(--card);
+        border:1px solid var(--border);
+        border-radius:6px;
+        overflow:hidden;
+        cursor:pointer;
+        transition:transform .15s,border-color .15s;
+        flex-shrink:0;
+        width:240px;
+      }
+      .game-card:hover {
+        transform:translateY(-3px);
+        border-color:var(--accent);
+      }
+      .game-card img {
+        width:100%;
+        display:block;
+        height:112px;
+        object-fit:cover;
+      }
+      .card-info {
+        padding:9px 11px 11px;
+      }
+      .card-title-row {
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        margin-bottom:4px;
+        gap:6px;
+      }
+      .card-title {
+        font-weight:600;
+        font-size:0.88rem;
+        white-space:nowrap;
+        overflow:hidden;
+        text-overflow:ellipsis;
+      }
+      .platform-tag {
+        background:var(--bg);
+        color:var(--muted);
+        font-size:0.66rem;
+        padding:2px 6px;
+        border-radius:3px;
+        border:1px solid var(--border);
+        flex-shrink:0;
+      }
+      .card-tags {
+        color:var(--accent2);
+        font-size:0.72rem;
+        margin-bottom:5px;
+      }
+      .card-desc {
+        color:var(--muted);
+        font-size:0.75rem;
+        line-height:1.4;
+        display:-webkit-box;
+        -webkit-line-clamp:2;
+        -webkit-box-orient:vertical;
+        overflow:hidden;
+      }
+
+      .card-rating {
+        display:flex;
+        align-items:center;
+        gap:5px;
+        margin-top:5px;
+      }
+      .card-stars {
+        font-size:0.78rem;
+        letter-spacing:1px;
+        color:#f1c40f;
+      }
+      .card-stars .dim {
+        color:#333;
+      }
+      .card-rating-label {
+        font-size:0.7rem;
+        color:var(--muted);
+      }
+
+      .dummy-img {
+        width:100%;
+        height:112px;
+        background:linear-gradient(135deg,#1a2535,#243040);
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        padding:12px;
+      }
+      .dummy-img span {
+        color:var(--text);
+        font-size:0.9rem;
+        text-align:center;
+        font-weight:600;
+        line-height:1.3;
+      }
+
+       .search-results {
+        display:none;
+        grid-template-columns:repeat(4,1fr);
+        gap:16px;
+      }
+      .search-results.active {
+        display:grid;
+      }
+      .search-results .game-card {
+        width:auto;
+      }
+      .search-results .game-card img {
+        height:130px;
+      }
+      @media(max-width:1100px) {
+        .search-results {
+          grid-template-columns:repeat(3,1fr);
+        }
+      }
+
+      .card-placeholder {
+        background:var(--card);
+        border:1px solid var(--border);
+        border-radius:6px;
+        overflow:hidden;
+        animation:pulse 1.4s infinite;
+        flex-shrink:0;
+        width:240px;
+      }
+      .card-placeholder .ph-img {
+        width:100%;
+        height:112px;
+        background:#2a2a2a;
+      }
+      .card-placeholder .ph-info {
+        padding:9px 11px 13px;
+        display:flex;
+        flex-direction:column;
+        gap:7px;
+      }
+      .card-placeholder .ph-line {
+        height:11px;
+        border-radius:3px;
+        background:#2e2e2e;
+      }
+      .ph-short {
+        width:55%;
+      }
+      @keyframes pulse {
+        0%,100% { opacity:1; }
+        50% { opacity:.5; }
+      }
+
+      #game-screen {
+        background:var(--bg);
+      }
+      .game-title-bar {
+        padding:20px 30px 0;
+        font-family:'Rajdhani',sans-serif;
+        font-size:2rem;
+        font-weight:700;
+      }
+      .game-body {
+        display:flex;
+        gap:24px;
+        padding:20px 30px;
+        flex:1;
+        overflow:hidden;
+        min-height:0;
+      }
+      .game-left {
+        flex:1;
+        background:#000;
+        border:1px solid var(--border);
+        border-radius:6px;
+        display:flex;
+        flex-direction:column;
+        color:var(--muted);
+        overflow:hidden;
+        min-height:0;
+      }
+      .game-left video {
+        width:100%;
+        display:block;
+      }
+      .game-right {
+        width:380px;
+        flex-shrink:0;
+        background:var(--bg3);
+        border:1px solid var(--border);
+        border-radius:6px;
+        padding:14px;
+        display:flex;
+        flex-direction:column;
+        gap:10px;
+        overflow-y:auto;
+      }
+      .game-right img {
+        width:100%;
+        border-radius:4px;
+      }
+      .game-right-desc {
+        color:var(--muted);
+        font-size:0.85rem;
+        line-height:1.5;
+      }
+      .game-right-tags {
+        color:var(--accent2);
+        font-size:0.82rem;
+        font-weight:600;
+      }
+      .game-footer {
+        background:var(--bg2);
+        border-top:1px solid var(--border);
+        padding:12px 20px;
+        display:flex;
+        justify-content:center;
+        gap:10px;
+        flex-shrink:0;
+      }
+      .game-price-box {
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        background:var(--bg);
+        border:1px solid var(--border);
+        border-radius:6px;
+        padding:10px 14px;
+        margin-top:4px;
+      }
+      .game-price-label {
+        font-size:0.72rem;
+        color:var(--muted);
+        text-transform:uppercase;
+        letter-spacing:0.5px;
+      }
+      .game-price-value {
+        font-family:'Rajdhani',sans-serif;
+        font-size:1.5rem;
+        font-weight:700;
+        color:#fff;
+      }
+      .dummy-game-hero {
+        width:100%;
+        height:100%;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        background:linear-gradient(135deg,#1a2535,#243040);
+        color:var(--muted);
+        font-size:1.1rem;
+      }
+
+      .modal-overlay {
+        position:fixed;
+        inset:0;
+        background:rgba(0,0,0,.65);
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        z-index:1000;
+      }
+      .modal-overlay.hidden {
+        display:none;
+      }
+      .modal {
+        background:var(--bg3);
+        border:1px solid var(--border);
+        border-radius:8px;
+        padding:24px;
+        min-width:320px;
+        max-width:480px;
+        width:90%;
+        display:flex;
+        flex-direction:column;
+        gap:14px;
+        max-height:90vh;
+        overflow-y:auto;
+      }
+      .modal h3 {
+        font-size:1.1rem;
+        font-weight:600;
+      }
+      .modal label {
+        font-size:0.78rem;
+        color:var(--muted);
+        display:block;
+        margin-bottom:3px;
+      }
+      .modal input, .modal textarea, .modal select {
+        width:100%;
+        background:var(--inp);
+        border:1px solid var(--border);
+        border-radius:4px;
+        padding:7px 10px;
+        color:var(--text);
+        font-family:'Inter',sans-serif;
+        font-size:0.9rem;
+        outline:none;
+      }
+      .modal input:focus, .modal textarea:focus, .modal select:focus {
+        border-color:var(--accent);
+      }
+      .modal textarea {
+        resize:vertical;
+        min-height:70px;
+      }
+      .modal-actions {
+        display:flex;
+        gap:8px;
+        justify-content:flex-end;
+      }
+      .modal-pre {
+        background:var(--bg);
+        border:1px solid var(--border);
+        border-radius:4px;
+        padding:10px;
+        font-size:0.83rem;
+        color:var(--muted);
+        white-space:pre-wrap;
+        word-break:break-word;
+        max-height:220px;
+        overflow-y:auto;
+        font-family:'Inter',sans-serif;
+        line-height:1.6;
+      }
+      .modal-note {
+        font-size:0.78rem;
+        color:var(--muted);
+      }
+
+      .toast {
+        position:fixed;
+        bottom:24px;
+        right:24px;
+        background:var(--bg3);
+        border:1px solid var(--border);
+        border-radius:6px;
+        padding:12px 18px;
+        font-size:0.88rem;
+        color:var(--text);
+        z-index:2000;
+        opacity:0;
+        transform:translateY(10px);
+        transition:all .25s;
+        pointer-events:none;
+      }
+      .toast.show {
+        opacity:1;
+        transform:translateY(0);
+      }
+
+      .notif-badge {
+        background:var(--accent2);
+        color:#fff;
+        border-radius:50%;
+        font-size:0.7rem;
+        padding:1px 5px;
+        margin-left:4px;
+        vertical-align:middle;
+        display:none;
+      }
+      .notif-badge.visible {
+        display:inline;
+      }
+
+      #cart-screen {
+        background:var(--bg);
+      }
+      .cart-header {
+        background:var(--bg2);
+        padding:14px 24px;
+        display:flex;
+        align-items:center;
+        gap:14px;
+        border-bottom:1px solid var(--border);
+        flex-shrink:0;
+      }
+      .cart-body {
+        flex:1;
+        overflow-y:auto;
+        padding:28px 32px;
+        display:flex;
+        flex-direction:column;
+        gap:14px;
+      }
+      .cart-empty {
+        color:var(--muted);
+        text-align:center;
+        margin-top:60px;
+        font-size:1.05rem;
+      }
+      .cart-item {
+        background:var(--card);
+        border:1px solid var(--border);
+        border-radius:6px;
+        padding:14px 18px;
+        display:flex;
+        align-items:center;
+        gap:16px;
+      }
+      .cart-item img {
+        width:100px;
+        height:47px;
+        object-fit:cover;
+        border-radius:4px;
+        flex-shrink:0;
+      }
+      .cart-item-info {
+        flex:1;
+      }
+      .cart-item-title {
+        font-weight:600;
+        font-size:0.95rem;
+        margin-bottom:3px;
+      }
+      .cart-item-genre {
+        color:var(--accent2);
+        font-size:0.75rem;
+      }
+      .cart-item-remove {
+        background:none;
+        border:1px solid var(--border);
+        border-radius:4px;
+        color:var(--muted);
+        cursor:pointer;
+        padding:5px 10px;
+        font-size:0.8rem;
+        transition:all .15s;
+      }
+      .cart-item-remove:hover {
+        border-color:#c0392b;
+        color:#e74c3c;
+      }
+      .cart-footer {
+        background:var(--bg2);
+        border-top:1px solid var(--border);
+        padding:14px 32px;
+        display:flex;
+        justify-content:flex-end;
+        gap:10px;
+        flex-shrink:0;
+      }
+      .cart-icon-btn {
+        background:var(--bg3);
+        border:1px solid var(--border);
+        border-radius:4px;
+        color:var(--text);
+        cursor:pointer;
+        padding:6px 12px;
+        font-size:1.1rem;
+        position:relative;
+        transition:opacity .15s;
+      }
+      .cart-icon-btn:hover {
+        opacity:.8;
+      }
+      .cart-count-badge {
+        position:absolute;
+        top:-5px;
+        right:-6px;
+        background:var(--accent);
+        color:#fff;
+        border-radius:50%;
+        font-size:0.65rem;
+        width:16px;
+        height:16px;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        font-weight:700;
+        pointer-events:none;
+      }
+      .cart-total-row {
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        padding:14px 0 0;
+        border-top:1px solid var(--border);
+        margin-top:8px;
+      }
+      .cart-total-label {
+        font-size:0.82rem;
+        color:var(--muted);
+      }
+      .cart-total-value {
+        font-family:'Rajdhani',sans-serif;
+        font-size:1.6rem;
+        font-weight:700;
+      }
+
+      .star-picker {
+        display:flex;
+        gap:6px;
+        font-size:1.8rem;
+        cursor:pointer;
+        margin:4px 0 8px;
+      }
+      .star-picker .sp {
+        color:#444;
+        transition:color .1s;
+        user-select:none;
+      }
+      .star-picker .sp.lit {
+        color:#f1c40f;
+      }
+      .review-stars {
+        color:#f1c40f;
+        font-size:0.85rem;
+        letter-spacing:1px;
+      }
+      .review-stars .dim {
+        color:#444;
+      }
+      .reviews-section {
+        display:flex;
+        flex-direction:column;
+        gap:8px;
+      }
+      .review-card {
+        background:var(--bg);
+        border:1px solid var(--border);
+        border-radius:5px;
+        padding:9px 12px;
+      }
+      .review-card-header {
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        margin-bottom:3px;
+      }
+      .review-card-user {
+        font-size:0.8rem;
+        font-weight:600;
+        color:var(--accent);
+      }
+      .review-card-comment {
+        font-size:0.82rem;
+        color:var(--muted);
+        line-height:1.5;
+      }
+
+      .media-slider-wrap {
+        position:relative;
+        background:#000;
+        border-radius:0;
+        overflow:hidden;
+        flex:1;
+        display:flex;
+        flex-direction:column;
+        min-height:0;
+      }
+      .media-slider {
+        flex:1;
+        display:flex;
+        overflow-x:auto;
+        scroll-snap-type:x mandatory;
+        scroll-behavior:smooth;
+        min-height:0;
+      }
+      .media-slider::-webkit-scrollbar {
+        display:none;
+      }
+      .media-slide {
+        min-width:100%;
+        flex-shrink:0;
+        scroll-snap-align:start;
+        display:flex;
+      }
+      .media-slide video, .media-slide img {
+        width:100%;
+        height:100%;
+        object-fit:cover;
+        display:block;
+      }
+      .slider-btn {
+        position:absolute;
+        top:50%;
+        transform:translateY(-50%);
+        background:rgba(0,0,0,.6);
+        border:none;
+        color:#fff;
+        font-size:1.4rem;
+        cursor:pointer;
+        padding:8px 14px;
+        z-index:10;
+        border-radius:3px;
+        transition:background .15s;
+      }
+      .slider-btn:hover {
+        background:rgba(70,130,180,.8);
+      }
+      .slider-btn.prev {
+        left:6px;
+      }
+      .slider-btn.next {
+        right:6px;
+      }
+      .slider-dots {
+        display:flex;
+        justify-content:center;
+        gap:6px;
+        padding:6px 0;
+        background:#000;
+      }
+      .slider-dot {
+        width:7px;
+        height:7px;
+        border-radius:50%;
+        background:#444;
+        cursor:pointer;
+        transition:background .15s;
+      }
+      .slider-dot.active {
+        background:var(--accent);
+      }
+
+      .profile-header {
+        background:var(--bg2);
+        padding:14px 24px;
+        display:flex;
+        align-items:center;
+        gap:14px;
+        border-bottom:1px solid var(--border);
+        flex-shrink:0;
+      }
+      .profile-body {
+        flex:1;
+        overflow-y:auto;
+        display:flex;
+        flex-direction:column;
+        align-items:center;
+        justify-content:center;
+        gap:18px;
+        padding:40px;
+      }
+      .profile-avatar {
+        width:90px;
+        height:90px;
+        border-radius:50%;
+        background:var(--accent);
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        font-size:2.4rem;
+        color:#fff;
+        font-weight:700;
+        flex-shrink:0;
+      }
+      .profile-username {
+        font-family:'Rajdhani',sans-serif;
+        font-size:1.8rem;
+        font-weight:700;
+        letter-spacing:1px;
+      }
+      .profile-role {
+        font-size:0.82rem;
+        color:var(--muted);
+        text-transform:uppercase;
+        letter-spacing:1px;
+        background:var(--bg3);
+        border:1px solid var(--border);
+        border-radius:20px;
+        padding:3px 12px;
+      }
+      .profile-footer {
+        background:var(--bg2);
+        border-top:1px solid var(--border);
+        padding:14px 32px;
+        display:flex;
+        justify-content:flex-end;
+        gap:10px;
+        flex-shrink:0;
+      }
+      .profile-icon-wrap {
+        position:relative;
+      }
+      .profile-icon-btn {
+        width:36px;
+        height:36px;
+        border-radius:50%;
+        background:var(--accent);
+        border:2px solid transparent;
+        color:#fff;
+        font-weight:700;
+        font-size:0.95rem;
+        cursor:pointer;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        transition:border-color .15s,opacity .15s;
+        font-family:'Inter',sans-serif;
+      }
+      .profile-icon-btn:hover {
+        border-color:#fff;
+        opacity:.9;
+      }
+      .profile-dropdown {
+        position:absolute;
+        top:calc(100% + 8px);
+        right:0;
+        background:var(--bg3);
+        border:1px solid var(--border);
+        border-radius:8px;
+        min-width:160px;
+        z-index:500;
+        box-shadow:0 8px 24px rgba(0,0,0,.5);
+        overflow:hidden;
+        display:none;
+      }
+      .profile-dropdown.open {
+        display:block;
+      }
+      .profile-dropdown-user {
+        padding:12px 16px 10px;
+        border-bottom:1px solid var(--border);
+      }
+      .profile-dropdown-user .pd-name {
+        font-weight:600;
+        font-size:0.9rem;
+      }
+      .profile-dropdown-user .pd-role {
+        font-size:0.74rem;
+        color:var(--muted);
+        margin-top:1px;
+      }
+      .profile-dropdown a, .profile-dropdown button.pd-item {
+        display:flex;
+        align-items:center;
+        gap:10px;
+        padding:10px 16px;
+        font-size:0.86rem;
+        color:var(--text);
+        background:none;
+        border:none;
+        width:100%;
+        text-align:left;
+        cursor:pointer;
+        font-family:'Inter',sans-serif;
+        transition:background .12s;
+      }
+      .profile-dropdown a:hover, .profile-dropdown button.pd-item:hover {
+        background:var(--bg);
+      }
+      .pd-logout {
+        color:#e74c3c !important;
+        border-top:1px solid var(--border);
+      }
+
+      #support-widget {
+        position:fixed;
+        bottom:20px;
+        right:20px;
+        z-index:9999;
+        display:flex;
+        flex-direction:column;
+        align-items:flex-end;
+        gap:8px;
+        pointer-events:none;
+      }
+      #support-btn {
+        pointer-events:all;
+        width:42px;
+        height:42px;
+        border-radius:50%;
+        background:var(--accent);
+        border:2px solid rgba(255,255,255,.15);
+        color:#fff;
+        font-size:1.25rem;
+        font-weight:700;
+        cursor:pointer;
+        box-shadow:0 4px 16px rgba(0,0,0,.55);
+        transition:transform .15s,opacity .15s;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        font-family:'Inter',sans-serif;
+      }
+      #support-btn:hover {
+        transform:scale(1.1);
+        opacity:.9;
+      }
+      #support-popup {
+        pointer-events:all;
+        background:var(--bg3);
+        border:1px solid var(--border);
+        border-radius:8px;
+        padding:14px 16px;
+        display:flex;
+        flex-direction:column;
+        gap:9px;
+        box-shadow:0 6px 24px rgba(0,0,0,.6);
+        min-width:240px;
+      }
+      #support-popup.support-hidden {
+        display:none;
+      }
+      .support-header {
+        font-size:0.82rem;
+        font-weight:600;
+        color:var(--muted);
+        text-transform:uppercase;
+        letter-spacing:0.6px;
+        padding-bottom:8px;
+        border-bottom:1px solid var(--border);
+      }
+      .support-row {
+        font-size:0.85rem;
+        color:var(--text);
+        display:flex;
+        align-items:center;
+        gap:8px;
+      }
+      .support-row a {
+        color:var(--accent);
+        text-decoration:none;
+      }
+      .support-row a:hover {
+        text-decoration:underline;
+      }
     `;
     document.head.appendChild(style);
 
+    // API helper object
     const API = {
+        // fetch GET request
         async get(path) {
             const r = await fetch(path);
             return r.json();
         },
+        // send POST request
         async post(path, data) {
             const r = await fetch(path, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                  },
                 body: new URLSearchParams(data)
             });
             return r.json();
         },
+        // send PUT request
         async put(path, data) {
             const r = await fetch(path, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                  },
                 body: new URLSearchParams(data)
             });
             return r.json();
         },
+        // send DELETE request
         async delete(path, data) {
             const r = await fetch(path, {
                 method: 'DELETE',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: new URLSearchParams(data)
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                  },
+                body: new URLSearchParams(data || {})
             });
             return r.json();
         }
     };
 
-    let currentUser = null;
-    let isAdmin     = false;
 
+    // app state vars
+    let currentUser = null;
+    let isAdmin = false;
+    let localRatingCache = {};
+
+    // sync user session
     async function syncSession() {
         const s = await API.get('/api/session');
         currentUser = s.loggedIn ? s.username : null;
-        isAdmin     = s.isAdmin;
+        isAdmin = s.isAdmin;
     }
 
+    // switch active screen
     function showScreen(id) {
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
         document.getElementById(id).classList.add('active');
     }
+    // show toast message
     function showToast(msg) {
         const t = document.getElementById('toast');
         t.textContent = msg;
         t.classList.add('show');
         setTimeout(() => t.classList.remove('show'), 2500);
     }
+    // open modal dialog
     function openModal(html) {
         document.getElementById('modal-box').innerHTML = html;
         document.getElementById('modal-overlay').classList.remove('hidden');
     }
+    // close modal dialog
     function closeModal() {
         document.getElementById('modal-overlay').classList.add('hidden');
     }
+    // escape HTML chars
     function escHtml(s) {
         return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     }
+    // build star HTML
+    function starsHtml(rating) {
+        let s = '';
+        for (let i = 1; i <= 5; i++) s += `<span class="${i <= rating ? '' : 'dim'}">★</span>`;
+        return `<span class="review-stars">${s}</span>`;
+    }
 
+
+    // close on backdrop click
     document.getElementById('modal-overlay').addEventListener('click', e => {
         if (e.target === document.getElementById('modal-overlay')) closeModal();
     });
+    // enter key triggers login
     document.getElementById('inp-pass').addEventListener('keydown', e => {
-        if (e.key === 'Enter') doLogin();
+        if (e.key === 'Enter')
+        doLogin();
     });
 
 
+    // show login popup
     function showLoginModal() {
         openModal(`
-            <h3 style="text-align:center;font-size:1.2rem;">Login</h3>
+            <h3 style="text-align:center;
+            font-size:1.2rem;
+            ">Login</h3>
             <div><label>Username</label><input id="m-inp-user" type="text" autocomplete="off"/></div>
             <div><label>Password</label><input id="m-inp-pass" type="password"/></div>
-            <div id="m-login-error" style="color:var(--accent2);font-size:0.82rem;text-align:center;display:none;">Invalid username or password</div>
+            <div id="m-login-error" style="color:var(--accent2);
+            font-size:0.82rem;
+            text-align:center;
+            display:none;
+            ">Invalid username or password</div>
             <div class="modal-actions">
                 <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
                 <button class="btn btn-primary" onclick="doModalLogin()">Login</button>
             </div>`);
         document.getElementById('m-inp-pass').addEventListener('keydown', e => {
-            if (e.key === 'Enter') doModalLogin();
+            if (e.key === 'Enter')
+            doModalLogin();
         });
     }
 
+    // login from modal
     async function doModalLogin() {
         const username = document.getElementById('m-inp-user').value.trim();
         const password = document.getElementById('m-inp-pass').value;
@@ -355,6 +1280,7 @@
         }
     }
 
+    // login from screen
     async function doLogin() {
         const username = document.getElementById('inp-user').value.trim();
         const password = document.getElementById('inp-pass').value;
@@ -370,21 +1296,26 @@
         }
     }
 
+    // logout clear session
     async function doLogout() {
         await API.post('/api/session/end', {});
         currentUser = null;
-        isAdmin     = false;
+        isAdmin = false;
         document.getElementById('inp-user').value = '';
         document.getElementById('inp-pass').value = '';
         openCatalog();
     }
 
+
+    // open catalog screen
     function openCatalog() {
         showScreen('catalog-screen');
         buildHeaderRight();
+        populateGenreFilter();
         buildGameGrid();
     }
 
+    // build header buttons
     function buildHeaderRight() {
         const hr = document.getElementById('header-right');
         hr.innerHTML = '';
@@ -409,74 +1340,97 @@
         }
 
         if (isAdmin) {
-            const a = document.createElement('button'); a.className='btn btn-primary'; a.innerHTML='&#43; Add Game'; a.onclick=showAddGameModal; hr.appendChild(a);
-            const rm = document.createElement('button'); rm.className='btn btn-danger'; rm.innerHTML='&#128465; Remove Game'; rm.onclick=showRemoveGameModal; hr.appendChild(rm);
-            const g = document.createElement('button'); g.className='btn btn-ghost'; g.innerHTML='&#127890; Genres'; g.onclick=showGenresModal; hr.appendChild(g);
-            const rv = document.createElement('button'); rv.className='btn btn-ghost'; rv.innerHTML='&#9997; Pending Reviews'; rv.onclick=showPendingReviewsModal; hr.appendChild(rv);
-            const nb = document.createElement('button'); nb.className='btn btn-ghost'; nb.id='notif-btn';
-            const badge = document.createElement('span'); badge.className='notif-badge'; badge.id='notif-badge';
-            nb.innerHTML='&#128276; Notifications'; nb.appendChild(badge); nb.onclick=showNotificationsModal; hr.appendChild(nb);
+            const a = document.createElement('button');
+            a.className = 'btn btn-primary';
+            a.innerHTML = '&#43; Add Game';
+            a.onclick = showAddGameModal;
+            hr.appendChild(a);
+
+            const rm = document.createElement('button');
+            rm.className = 'btn btn-danger';
+            rm.innerHTML = '🗑 Remove Game';
+            rm.onclick = showRemoveGameModal;
+            hr.appendChild(rm);
+
+            const g = document.createElement('button');
+            g.className = 'btn btn-ghost';
+            g.innerHTML = 'Genres';
+            g.onclick = showGenresModal;
+            hr.appendChild(g);
+
+            const rv = document.createElement('button');
+            rv.className = 'btn btn-ghost';
+            rv.innerHTML = 'Pending Reviews';
+            rv.onclick = showPendingReviewsModal;
+            hr.appendChild(rv);
+
+            const nb = document.createElement('button');
+            nb.className = 'btn btn-ghost';
+            nb.id = 'notif-btn';
+            const badge = document.createElement('span');
+            badge.className = 'notif-badge';
+            badge.id = 'notif-badge';
+            nb.innerHTML = 'Notifications';
+            nb.appendChild(badge);
+            nb.onclick = showNotificationsModal;
+            hr.appendChild(nb);
             updateNotifBadge();
         }
 
-        const initials = currentUser.slice(0,2).toUpperCase();
-        const wrap = document.createElement('div'); wrap.className='profile-icon-wrap'; wrap.id='profile-icon-wrap';
+        const initials = currentUser.slice(0, 2).toUpperCase();
+        const wrap = document.createElement('div');
+        wrap.className = 'profile-icon-wrap';
+        wrap.id = 'profile-icon-wrap';
         wrap.innerHTML = `
             <button class="profile-icon-btn" id="profile-icon-btn" onclick="toggleProfileDropdown(event)">${initials}</button>
             <div class="profile-dropdown" id="profile-dropdown">
                 <div class="profile-dropdown-user">
-                    <div class="pd-name">${currentUser}</div>
+                    <div class="pd-name">${escHtml(currentUser)}</div>
                     <div class="pd-role">${isAdmin ? 'Administrator' : 'Member'}</div>
                 </div>
                 <button class="pd-item" onclick="openProfileScreen()">👤 &nbsp;Profile</button>
                 <button class="pd-item pd-logout" onclick="doLogout()">⏻ &nbsp;Logout</button>
             </div>`;
         hr.appendChild(wrap);
-        document.addEventListener('click', closeProfileDropdownOutside);
+        // close support outside
+    document.addEventListener('click', closeProfileDropdownOutside);
     }
 
-    function toggleProfileDropdown(e) {
-        e.stopPropagation();
-        document.getElementById('profile-dropdown')?.classList.toggle('open');
-    }
-    function closeProfileDropdownOutside(e) {
-        const wrap = document.getElementById('profile-icon-wrap');
-        if (wrap && !wrap.contains(e.target))
-            document.getElementById('profile-dropdown')?.classList.remove('open');
-    }
-
-    function openProfileScreen() {
-        document.getElementById('profile-dropdown')?.classList.remove('open');
-        showScreen('profile-screen');
-        const initials = currentUser ? currentUser.slice(0,2).toUpperCase() : '?';
-        document.getElementById('profile-body').innerHTML = `
-            <div class="profile-avatar">${initials}</div>
-            <div class="profile-username">${escHtml(currentUser||'')}</div>
-            <div class="profile-role">${isAdmin ? 'Administrator' : 'Member'}</div>`;
+    // fill genre dropdown
+    async function populateGenreFilter() {
+        const sel = document.getElementById('genre-filter');
+        const current = sel.value;
+        try {
+            const { genres } = await API.get('/api/genres');
+            sel.innerHTML = '<option value="">All Genres</option>';
+            genres.forEach(g => {
+                const opt = document.createElement('option');
+                opt.value = g;
+                opt.textContent = g;
+                if (g === current) opt.selected = true;
+                sel.appendChild(opt);
+            });
+        } catch {}
     }
 
-    async function updateNotifBadge() {
-        const badge = document.getElementById('notif-badge');
-        if (!badge) return;
-        const { count } = await API.get('/api/notifications');
-        badge.textContent = count;
-        badge.className = 'notif-badge' + (count > 0 ? ' visible' : '');
-    }
-
-    const GAMES_LIST = [730, 570, 440, 578080, 1091500, 1172470, 271590, 252490,
+    // steam app ID list
+    const GAMES_LIST = [
+        730, 570, 440, 578080, 1091500, 1172470, 271590, 252490,
         550, 620980, 2651280, 1774580, 739630, 1392860, 3017860, 1547000, 105600, 1966720,
         1693980, 1326470, 502570, 413150, 346900, 365670, 431730, 238960, 39210, 292030, 255710,
         1066780, 289070, 594570, 431960, 267550, 243580, 447820, 262410, 268500, 246620, 346110,
         548430, 294100, 108600, 594650, 218620, 304930, 582660, 306130, 582010, 1245620, 1174180,
         377160, 227300, 236390, 323190, 784150, 813780, 945360, 251570, 236850, 425280,
-        438100, 757480, 620, 211820, 480];
+        438100, 757480, 620, 211820, 480
+    ];
 
     const CORS_PROXY = "https://corsproxy.io/?url=";
-    const gameCache  = {};
+    const gameCache = {};
 
+    // genre alias map
     const GENRE_MAP = {
         'action':'Action','rpg':'RPG','role-playing':'RPG','sports':'Sports','racing':'Sports',
-        'shooter':'Shooter','first-person':'FPS','fps':'FPS','tactical':'Shooter',
+        'shooter':'Shooter','first-person':'Shooter','fps':'Shooter','tactical':'Shooter',
         'sandbox':'Sandbox','open world':'Sandbox','survival':'Sandbox',
         'horror':'Horror','psychological horror':'Horror','strategy':'Strategy',
         'simulation':'Simulation','adventure':'Adventure','indie':'Indie',
@@ -484,21 +1438,25 @@
         'massively multiplayer':'Multiplayer'
     };
 
+    // fetch our genres
     async function getOurGenres() {
         const { genres } = await API.get('/api/genres');
         return genres.map(g => g.toLowerCase());
     }
 
+    // map steam genre
     function mapGenre(steamGenre, ourGenres) {
         const lower = steamGenre.toLowerCase();
-        if (ourGenres.includes(lower)) return steamGenre;
+        const exactMatch = ourGenres.find(g => g === lower);
+        if (exactMatch) return steamGenre;
         for (const [key, val] of Object.entries(GENRE_MAP))
             if (lower.includes(key)) return val;
         return null;
     }
 
+    // render game grid
     async function buildGameGrid() {
-        const body          = document.getElementById('catalog-body');
+        const body = document.getElementById('catalog-body');
         const searchResults = document.getElementById('search-results');
         body.querySelectorAll('.genre-section').forEach(s => s.remove());
         searchResults.innerHTML = '';
@@ -509,7 +1467,7 @@
         placeholderSection.id = 'placeholder-section';
         const placeholderRow = document.createElement('div');
         placeholderRow.className = 'genre-row';
-        GAMES_LIST.forEach(() => {
+        GAMES_LIST.slice(0, 12).forEach(() => {
             const ph = document.createElement('div');
             ph.className = 'card-placeholder';
             ph.innerHTML = '<div class="ph-img"></div><div class="ph-info"><div class="ph-line"></div><div class="ph-line ph-short"></div></div>';
@@ -518,23 +1476,19 @@
         placeholderSection.appendChild(placeholderRow);
         body.appendChild(placeholderSection);
 
-        const ourGenres = await getOurGenres();
+        const [ourGenres, backendGames, steamResults] = await Promise.all([
+            getOurGenres(),
+            API.get('/api/games').catch(() => []),
+            Promise.all(GAMES_LIST.map(id => fetchGameData(id).then(game => ({ id, game }))))
+        ]);
 
-        // Fetch backend ratings (keyed by gameId) once for all cards
-        const ratingMap = {};
-        try {
-            const backendGames = await API.get('/api/games');
-            if (Array.isArray(backendGames)) {
-                backendGames.forEach(g => { ratingMap[g.id] = g.averageRating || 0; });
-            }
-        } catch {}
-
-        const results   = await Promise.all(GAMES_LIST.map(id => fetchGameData(id).then(game => ({ id, game }))));
+        const safeBackend = Array.isArray(backendGames) ? backendGames : [];
 
         document.getElementById('placeholder-section')?.remove();
 
         const genreMap = {};
-        results.forEach(({ id, game }) => {
+
+        steamResults.forEach(({ id, game }) => {
             if (!game) return;
             const mapped = new Set();
             (game.genres.length ? game.genres : ['Other']).forEach(g => {
@@ -544,40 +1498,71 @@
             if (mapped.size === 0) mapped.add('Other');
             mapped.forEach(genre => {
                 if (!genreMap[genre]) genreMap[genre] = [];
-                genreMap[genre].push({ id, game });
+                genreMap[genre].push({ type: 'steam', id, game, genres: [...mapped] });
             });
+        });
+
+        safeBackend.forEach(game => {
+            const genre = game.genre || 'Other';
+            if (!genreMap[genre]) genreMap[genre] = [];
+            genreMap[genre].push({ type: 'dummy', game });
         });
 
         Object.keys(genreMap).sort().forEach(genre => {
             const section = document.createElement('div');
             section.className = 'genre-section';
-            section.dataset.genre = genre;
+            section.dataset.genre = genre.toLowerCase();
             const heading = document.createElement('div');
             heading.className = 'genre-heading';
             heading.textContent = genre;
             const row = document.createElement('div');
             row.className = 'genre-row';
-            genreMap[genre].forEach(({ id, game }) => row.appendChild(buildCard(id, game, ratingMap[id] || 0)));
+
+            genreMap[genre].forEach(item => {
+                let card;
+                if (item.type === 'steam') {
+                    card = buildCard(item.id, item.game, localRatingCache[item.id] || 0);
+                    card.dataset.genres = item.genres.join(',').toLowerCase();
+                } else {
+                    card = buildDummyCard(item.game);
+                    card.dataset.genres = (item.game.genre || '').toLowerCase();
+                }
+                row.appendChild(card);
+            });
+
             section.appendChild(heading);
             section.appendChild(row);
             body.appendChild(section);
         });
 
-        results.forEach(({ id, game }) => {
+        steamResults.forEach(({ id, game }) => {
             if (!game) return;
-            searchResults.appendChild(buildCard(id, game, ratingMap[id] || 0));
+            const mapped = new Set();
+            (game.genres.length ? game.genres : ['Other']).forEach(g => {
+                const m = mapGenre(g, ourGenres);
+                if (m) mapped.add(m);
+            });
+            const card = buildCard(id, game, localRatingCache[id] || 0);
+            card.dataset.genres = [...mapped].join(',').toLowerCase();
+            searchResults.appendChild(card);
+        });
+        safeBackend.forEach(game => {
+            const card = buildDummyCard(game);
+            card.dataset.genres = (game.genre || '').toLowerCase();
+            searchResults.appendChild(card);
         });
     }
 
+    // fetch steam data
     async function fetchGameData(appID) {
         if (gameCache[appID]) return gameCache[appID];
         try {
-            const res  = await fetch(`${CORS_PROXY}https://store.steampowered.com/api/appdetails?appids=${appID}`);
+            const res = await fetch(`${CORS_PROXY}https://store.steampowered.com/api/appdetails?appids=${appID}`);
             const json = await res.json();
             const data = json[String(appID)]?.data;
             if (!data) return null;
             const p = data.platforms || {};
-            let platform = p.windows ? 'Windows' : p.mac ? 'Mac' : p.linux ? 'Linux' : 'WEB';
+            const platform = p.windows ? 'Windows' : p.mac ? 'Mac' : p.linux ? 'Linux' : 'WEB';
             const game = {
                 name: data.name,
                 description: data.short_description,
@@ -592,27 +1577,30 @@
         } catch { return null; }
     }
 
+    // build steam card
     function buildCard(appID, game, avgRating) {
         const rating = avgRating || 0;
         const rounded = Math.round(rating);
-        let starsHtml = '';
-        for (let i = 1; i <= 5; i++) starsHtml += `<span class="${i <= rounded ? '' : 'dim'}">★</span>`;
-        const ratingLabel = rating > 0
-            ? `${rating.toFixed(1)} / 5`
-            : 'No reviews yet';
+        let stars = '';
+        for (let i = 1; i <= 5; i++) stars += `<span class="${i <= rounded ? '' : 'dim'}">★</span>`;
+        const ratingLabel = rating > 0 ? `${rating.toFixed(1)} / 5` : 'No reviews yet';
 
         const card = document.createElement('div');
         card.className = 'game-card';
+        card.dataset.appId = appID;
         card.dataset.name = game.name.toLowerCase();
-        card.dataset.desc = game.description.toLowerCase();
+        card.dataset.desc = (game.description || '').toLowerCase();
         card.innerHTML = `
             <img src="${game.imageURL}" alt="${escHtml(game.name)}" loading="lazy"/>
             <div class="card-info">
-                <div class="card-title-row"><span class="card-title">${escHtml(game.name)}</span><span class="platform-tag">${game.platform}</span></div>
-                <div class="card-tags">${game.genres.map(g=>'#'+g).join('  ')}</div>
+                <div class="card-title-row">
+                    <span class="card-title">${escHtml(game.name)}</span>
+                    <span class="platform-tag">${escHtml(game.platform)}</span>
+                </div>
+                <div class="card-tags">${game.genres.map(g => '#' + g).join('  ')}</div>
                 <div class="card-desc">${escHtml(game.description)}</div>
                 <div class="card-rating">
-                    <span class="card-stars">${starsHtml}</span>
+                    <span class="card-stars">${stars}</span>
                     <span class="card-rating-label">${ratingLabel}</span>
                 </div>
             </div>`;
@@ -620,355 +1608,80 @@
         return card;
     }
 
+    // build admin card
+    function buildDummyCard(game) {
+        const rating = localRatingCache[game.id] || game.averageRating || 0;
+        const rounded = Math.round(rating);
+        let stars = '';
+        for (let i = 1; i <= 5; i++) stars += `<span class="${i <= rounded ? '' : 'dim'}">★</span>`;
+        const ratingLabel = rating > 0 ? `${rating.toFixed(1)} / 5` : 'No reviews yet';
+
+        const card = document.createElement('div');
+        card.className = 'game-card';
+        card.dataset.appId = 'dummy_' + game.id;
+        card.dataset.name = (game.title || '').toLowerCase();
+        card.dataset.desc = (game.description || '').toLowerCase();
+        card.dataset.genres = (game.genre || '').toLowerCase();
+        card.innerHTML = `
+            <div class="dummy-img"><span>${escHtml(game.title)}</span></div>
+            <div class="card-info">
+                <div class="card-title-row">
+                    <span class="card-title">${escHtml(game.title)}</span>
+                    <span class="platform-tag">${escHtml(game.platform || 'PC')}</span>
+                </div>
+                <div class="card-tags">#${escHtml(game.genre || '')}</div>
+                <div class="card-desc">${escHtml(game.description || 'An admin-added title.')}</div>
+                <div class="card-rating">
+                    <span class="card-stars">${stars}</span>
+                    <span class="card-rating-label">${ratingLabel}</span>
+                </div>
+            </div>`;
+        card.addEventListener('click', () => openDummyGame(game));
+        return card;
+    }
+
+    // filter by search
     function filterCatalog() {
         const text = document.getElementById('search-bar').value.toLowerCase().trim();
+        const genre = (document.getElementById('genre-filter').value || '').toLowerCase();
         const body = document.getElementById('catalog-body');
-        const searchResults = document.getElementById('search-results');
-        if (!text) {
-            searchResults.classList.remove('active');
+        const sr = document.getElementById('search-results');
+
+        if (!text && !genre) {
+            // Reset: show all genre sections
+            sr.classList.remove('active');
             body.querySelectorAll('.genre-section').forEach(s => s.style.display = 'block');
-        } else {
-            body.querySelectorAll('.genre-section').forEach(s => s.style.display = 'none');
-            searchResults.classList.add('active');
-            searchResults.querySelectorAll('.game-card').forEach(card => {
-                card.style.display = (card.dataset.name.includes(text) || card.dataset.desc.includes(text)) ? '' : 'none';
-            });
-        }
-    }
-
-    const DUMMY_PRICES = [9.99,14.99,19.99,24.99,29.99,39.99,49.99,59.99];
-
-    function getItemPrice(id) {
-        return DUMMY_PRICES[id % DUMMY_PRICES.length];
-      }
-
-    const cartMirror = {};
-
-    async function updateCartBadge() {
-        const badge = document.getElementById('cart-count-badge');
-        if (!badge || !currentUser) return;
-        const raw  = await API.get(`/api/wishlist?username=${encodeURIComponent(currentUser)}`);
-        const lines = raw.result.split('\n').filter(l => l.trim() && l !== 'Wishlist is empty.');
-        const count = lines.length;
-        if (count > 0) { badge.textContent = count; badge.style.display = 'flex'; }
-        else badge.style.display = 'none';
-    }
-
-    async function openCartScreen() {
-        showScreen('cart-screen');
-        const body = document.getElementById('cart-body');
-        body.innerHTML = '';
-
-        const { result } = await API.get(`/api/wishlist?username=${encodeURIComponent(currentUser)}`);
-        if (result === 'Wishlist is empty.' || !result.trim()) {
-            body.innerHTML = '<div class="cart-empty">Your cart is empty.</div>';
-            refreshCartTotal([]);
             return;
         }
 
-        const items = result.split('\n').filter(Boolean).map(line => {
-            const idMatch    = line.match(/Game ID: (\d+)/);
-            const titleMatch = line.match(/Title: (.+)/);
-            return {
-                id:    idMatch    ? parseInt(idMatch[1])    : 0,
-                title: titleMatch ? titleMatch[1].trim()    : '?',
-            };
+        if (!text && genre) {
+            sr.classList.remove('active');
+            body.querySelectorAll('.genre-section').forEach(s => {
+                s.style.display = s.dataset.genre === genre ? 'block' : 'none';
+            });
+            return;
+        }
+
+        body.querySelectorAll('.genre-section').forEach(s => s.style.display = 'none');
+        sr.classList.add('active');
+        sr.querySelectorAll('.game-card').forEach(card => {
+            const matchText = card.dataset.name.includes(text) || card.dataset.desc.includes(text);
+            const matchGenre = !genre || (card.dataset.genres || '').includes(genre);
+            card.style.display = matchText && matchGenre ? '' : 'none';
         });
-
-        items.forEach(item => {
-            const price = getItemPrice(item.id);
-            const meta  = cartMirror[item.id] || {};
-            const div   = document.createElement('div');
-            div.className = 'cart-item';
-            div.innerHTML = `
-                ${meta.image ? `<img src="${meta.image}" alt="${escHtml(item.title)}"/>` : ''}
-                <div class="cart-item-info">
-                    <div class="cart-item-title">${escHtml(item.title)}</div>
-                    <div class="cart-item-genre">${escHtml(meta.genre || '')}</div>
-                </div>
-                <div style="font-family:'Rajdhani',sans-serif;font-size:1.2rem;font-weight:700;margin-right:10px;white-space:nowrap;">$${price.toFixed(2)}</div>
-                <button class="cart-item-remove" onclick="removeCartItem(${item.id}, this)">Remove</button>`;
-            body.appendChild(div);
-        });
-        refreshCartTotal(items);
     }
 
-    function refreshCartTotal(items) {
-        const total    = items.reduce((s, it) => s + getItemPrice(it.id), 0);
-        const totalRow = document.getElementById('cart-total-row');
-        const totalVal = document.getElementById('cart-total-value');
-        const buyBtn   = document.getElementById('cart-buy-btn');
-        if (items.length > 0) {
-            if (totalRow) totalRow.style.display = 'flex';
-            if (totalVal) totalVal.textContent = '$' + total.toFixed(2);
-            if (buyBtn)   buyBtn.style.display  = 'inline-flex';
-        } else {
-            if (totalRow) totalRow.style.display = 'none';
-            if (buyBtn)   buyBtn.style.display   = 'none';
-        }
-    }
-
-    async function removeCartItem(gameId, btn) {
-        await API.delete('/api/wishlist', { username: currentUser, gameId });
-        btn.closest('.cart-item').remove();
-        await updateCartBadge();
-        const body = document.getElementById('cart-body');
-        const remaining = body.querySelectorAll('.cart-item');
-        if (!remaining.length) {
-            body.innerHTML = '<div class="cart-empty">Your cart is empty.</div>';
-            refreshCartTotal([]);
-        } else {
-            refreshCartTotal([...remaining].map(el => {
-                const btn = el.querySelector('.cart-item-remove');
-                const id  = btn ? parseInt(btn.getAttribute('onclick').match(/\d+/)[0]) : 0;
-                return { id };
-            }));
-        }
-    }
-
-    async function clearCart() {
-        await API.post('/api/wishlist/clear', { username: currentUser });
-        await updateCartBadge();
-        document.getElementById('cart-body').innerHTML = '<div class="cart-empty">Your cart is empty.</div>';
-        refreshCartTotal([]);
-    }
-
-
-    function showAddGameModal() {
-        openModal(`
-            <h3>Add Game</h3>
-            <div><label>Title</label><input id="ag-title"/></div>
-            <div><label>Genre</label><input id="ag-genre"/></div>
-            <div><label>Platform</label><input id="ag-platform"/></div>
-            <div><label>Price</label><input id="ag-price" type="number" step="0.01"/></div>
-            <div><label>Description</label><textarea id="ag-desc"></textarea></div>
-            <div><label>Trailer URL</label><input id="ag-trailer"/></div>
-            <div class="modal-actions">
-                <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
-                <button class="btn btn-primary" onclick="doAddGame()">Add</button>
-            </div>`);
-    }
-    async function doAddGame() {
-        const { ok } = await API.post('/api/games', {
-            title:      document.getElementById('ag-title').value,
-            genre:      document.getElementById('ag-genre').value,
-            platform:   document.getElementById('ag-platform').value,
-            price:      document.getElementById('ag-price').value || '0',
-            description:document.getElementById('ag-desc').value,
-            trailerUrl: document.getElementById('ag-trailer').value
-        });
-        closeModal();
-        showToast(ok ? 'Game added successfully!' : 'Failed to add game.');
-    }
-
-    function showRemoveGameModal() {
-        openModal(`
-            <h3>Remove Game</h3>
-            <div><label>Game ID</label><input id="rm-id" type="number"/></div>
-            <div class="modal-actions">
-                <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
-                <button class="btn btn-danger" onclick="doRemoveGame()">Remove</button>
-            </div>`);
-    }
-    async function doRemoveGame() {
-        const id = document.getElementById('rm-id').value;
-        const { ok } = await API.delete(`/api/games/${id}`, {});
-        closeModal();
-        showToast(ok ? 'Game removed successfully!' : 'Failed to remove game.');
-    }
-
-    async function showGenresModal() {
-        const { genres, remainingSlots } = await API.get('/api/genres');
-        const list = genres.map((g, i) => `${i+1}. ${g}`).join('\n');
-        openModal(`
-            <h3>Manage Genres</h3>
-            <div class="modal-pre">${escHtml(list)}</div>
-            <div style="font-size:0.78rem;color:var(--muted);">Remaining slots: ${remainingSlots}</div>
-            <div><label>Add Genre</label><input id="genre-add-name" placeholder="Genre name"/></div>
-            <div><label>Remove Genre</label><input id="genre-rm-name" placeholder="Genre name"/></div>
-            <div class="modal-actions">
-                <button class="btn btn-ghost" onclick="closeModal()">Close</button>
-                <button class="btn btn-danger" onclick="doRemoveGenre()">Remove</button>
-                <button class="btn btn-primary" onclick="doAddGenre()">Add</button>
-            </div>`);
-    }
-    async function doAddGenre() {
-        const name = document.getElementById('genre-add-name').value.trim();
-        const { ok } = await API.post('/api/genres', { name });
-        closeModal();
-        showToast(ok ? `Genre "${name}" added!` : 'Failed — duplicate, max reached, or blank.');
-    }
-    async function doRemoveGenre() {
-        const name = document.getElementById('genre-rm-name').value.trim();
-        const { ok } = await API.delete('/api/genres', { name });
-        closeModal();
-        showToast(ok ? `Genre "${name}" removed!` : `Genre "${name}" not found.`);
-    }
-
-    async function showPendingReviewsModal() {
-        const { result } = await API.get('/api/reviews/pending');
-        openModal(`
-            <h3>Pending Reviews</h3>
-            <div class="modal-pre">${escHtml(result)}</div>
-            <div><label>Review ID to Approve</label><input id="rev-approve-id" type="number"/></div>
-            <div><label>Review ID to Reject</label><input id="rev-reject-id" type="number"/></div>
-            <div class="modal-actions">
-                <button class="btn btn-ghost" onclick="closeModal()">Close</button>
-                <button class="btn btn-danger" onclick="doRejectReview()">Reject</button>
-                <button class="btn btn-primary" onclick="doApproveReview()">Approve</button>
-            </div>`);
-    }
-    async function doApproveReview() {
-        const reviewId = document.getElementById('rev-approve-id').value;
-        const { ok }   = await API.post('/api/reviews/approve', { reviewId });
-        closeModal();
-        showToast(ok ? 'Review approved!' : 'Review not found.');
-        const rc = document.getElementById('reviews-container');
-        if (rc && window._currentGameAppID) {
-            rc.innerHTML = await buildReviewsHtml(window._currentGameAppID);
-        }
-        updateNotifBadge();
-    }
-    async function doRejectReview() {
-        const reviewId = document.getElementById('rev-reject-id').value;
-        const { ok }   = await API.post('/api/reviews/reject', { reviewId });
-        closeModal();
-        showToast(ok ? 'Review rejected.' : 'Review not found.');
-    }
-
-
-    async function showNotificationsModal() {
-        const { all } = await API.get('/api/notifications');
-        openModal(`
-            <h3>Notifications</h3>
-            <div class="modal-pre">${escHtml(all)}</div>
-            <div class="modal-actions">
-                <button class="btn btn-ghost" onclick="closeModal()">Close</button>
-                <button class="btn btn-primary" onclick="doMarkAllRead()">Mark All Read</button>
-            </div>`);
-        await API.post('/api/notifications/markAllRead', {});
-        updateNotifBadge();
-    }
-    async function doMarkAllRead() {
-        await API.post('/api/notifications/markAllRead', {});
-        closeModal();
-        updateNotifBadge();
-        showToast('All notifications marked as read.');
-    }
-
-    function starsHtml(rating) {
-        let s = '';
-        for (let i = 1; i <= 5; i++) s += `<span class="${i <= rating ? '' : 'dim'}">★</span>`;
-        return `<span class="review-stars">${s}</span>`;
-    }
-
-    function toggleSupportPopup(e) {
-        e.stopPropagation();
-        document.getElementById('support-popup').classList.toggle('support-hidden');
-    }
-    document.addEventListener('click', () => {
-        document.getElementById('support-popup')?.classList.add('support-hidden');
-    });
-
-    async function buildReviewsHtml(appID) {
-        const { result } = await API.get(`/api/reviews?gameId=${appID}`);
-        if (result === 'No reviews yet.') return '<div style="color:var(--muted);font-size:0.82rem;">No reviews yet.</div>';
-        const items = result.split('\n').filter(Boolean).map(line => {
-            const u = line.match(/User: ([^|]+)/);
-            const r = line.match(/Rating: (\d+)/);
-            const c = line.match(/Comment: (.*)/);
-            return {
-                user:    u ? u[1].trim() : '?',
-                rating:  r ? parseInt(r[1]) : 0,
-                comment: c ? c[1].trim() : ''
-            };
-        });
-
-        // Compute average rating from approved reviews
-        const avg = items.length ? items.reduce((s, r) => s + r.rating, 0) / items.length : 0;
-        const rounded = Math.round(avg);
-        let avgStars = '';
-        for (let i = 1; i <= 5; i++) avgStars += `<span class="${i <= rounded ? '' : 'dim'}">★</span>`;
-        const summaryHtml = `
-            <div style="display:flex;align-items:center;gap:10px;padding:8px 0 4px;border-bottom:1px solid var(--border);margin-bottom:6px;">
-                <span class="review-stars" style="font-size:1rem;">${avgStars}</span>
-                <span style="font-size:0.85rem;font-weight:600;">${avg.toFixed(1)} / 5</span>
-                <span style="font-size:0.75rem;color:var(--muted);">(${items.length} review${items.length !== 1 ? 's' : ''})</span>
-            </div>`;
-
-        return summaryHtml + '<div class="reviews-section">' + items.map(r => `
-            <div class="review-card">
-                <div class="review-card-header">
-                    <span class="review-card-user">${escHtml(r.user)}</span>
-                    ${starsHtml(r.rating)}
-                </div>
-                <div class="review-card-comment">${escHtml(r.comment)}</div>
-            </div>`).join('') + '</div>';
-    }
-
-    function buildMediaSlider(game) {
-        const slides = [];
-        let hlsUrl = null;
-        if (game.movies && game.movies.length > 0) {
-            const movie = game.movies[0];
-            if (movie.hls_h264) hlsUrl = movie.hls_h264;
-            let directUrl = null;
-            if (!hlsUrl) {
-                if (movie.mp4)  directUrl = (typeof movie.mp4  === 'string') ? movie.mp4  : movie.mp4['max']  || movie.mp4['480']  || null;
-                if (!directUrl && movie.webm) directUrl = (typeof movie.webm === 'string') ? movie.webm : movie.webm['max'] || movie.webm['480'] || null;
-                if (!directUrl && movie.url) directUrl = movie.url;
-            }
-            if (hlsUrl)       slides.push('<div class="media-slide"><video id="game-trailer" controls muted playsinline preload="auto"></video></div>');
-            else if (directUrl) slides.push(`<div class="media-slide"><video id="game-trailer" controls autoplay muted playsinline preload="auto" src="${directUrl}"></video></div>`);
-        }
-        if (game.screenshots) {
-            for (let i = 0; i < Math.min(8, game.screenshots.length); i++) {
-                const sc = game.screenshots[i];
-                if (sc?.path_full) slides.push(`<div class="media-slide"><img src="${sc.path_full}" loading="lazy"/></div>`);
-            }
-        }
-        if (!slides.length) return '<div style="color:gray;padding:40px;text-align:center;">No media available</div>';
-        let dots = '';
-        slides.forEach((_, i) => dots += `<div class="slider-dot${i===0?' active':''}" onclick="sliderGo(${i})"></div>`);
-        return `<div class="media-slider-wrap">
-            <button class="slider-btn prev" onclick="sliderPrev()">&#8249;</button>
-            <div class="media-slider" id="media-slider">${slides.join('')}</div>
-            <button class="slider-btn next" onclick="sliderNext()">&#8250;</button>
-            <div class="slider-dots" id="slider-dots">${dots}</div>
-        </div>`;
-    }
+    // price lookup table
+    const DUMMY_PRICES = [9.99,14.99,19.99,24.99,29.99,39.99,49.99,59.99];
+    function getItemPrice(id) { return DUMMY_PRICES[id % DUMMY_PRICES.length]; }
 
     let _sliderIndex = 0;
-    function updateDots() {
-        document.querySelectorAll('#slider-dots .slider-dot').forEach((d, i) => d.classList.toggle('active', i === _sliderIndex));
-    }
-    function sliderGo(i) {
-        const slider = document.getElementById('media-slider'); if (!slider) return;
-        _sliderIndex = Math.max(0, Math.min(i, slider.children.length - 1));
-        slider.scrollTo({ left: _sliderIndex * slider.clientWidth, behavior: 'smooth' });
-        updateDots();
-    }
-    function sliderPrev() { sliderGo(_sliderIndex - 1); }
-    function sliderNext() { sliderGo(_sliderIndex + 1); }
 
-    function attachTrailer(hlsUrl) {
-        const vid = document.getElementById('game-trailer');
-        if (!vid || !hlsUrl) return;
-        if (Hls.isSupported()) {
-            const hls = new Hls();
-            hls.loadSource(hlsUrl);
-            hls.attachMedia(vid);
-            hls.on(Hls.Events.MANIFEST_PARSED, () => vid.play().catch(()=>{}));
-        } else if (vid.canPlayType('application/vnd.apple.mpegurl')) {
-            vid.src = hlsUrl;
-            vid.play().catch(()=>{});
-        }
-    }
-
+    // open steam game
     async function openGame(appID, gameName) {
         showScreen('game-screen');
         document.getElementById('game-title-bar').textContent = '…';
-        document.getElementById('game-left').innerHTML  = '<span>Loading…</span>';
+        document.getElementById('game-left').innerHTML = '<span style="padding:40px;color:var(--muted);">Loading…</span>';
         document.getElementById('game-right').innerHTML = '';
         document.getElementById('game-footer').innerHTML = '';
 
@@ -978,13 +1691,12 @@
         document.getElementById('game-title-bar').textContent = game.name;
         _sliderIndex = 0;
         window._currentGameAppID = appID;
+        window._currentDummyGame = null;
 
         document.getElementById('game-left').innerHTML = buildMediaSlider(game);
         if (game.movies?.length > 0 && game.movies[0].hls_h264) attachTrailer(game.movies[0].hls_h264);
 
-        const DUMMY_PRICES = [9.99,14.99,19.99,24.99,29.99,39.99,49.99,59.99];
         const dummyPrice = DUMMY_PRICES[appID % DUMMY_PRICES.length].toFixed(2);
-
         const reviewsHtml = await buildReviewsHtml(appID);
 
         document.getElementById('game-right').innerHTML = `
@@ -996,51 +1708,90 @@
                 </div>
             </div>
             <div class="game-right-desc">${escHtml(game.description)}</div>
-            <div class="game-right-tags">${game.genres.map(g=>'#'+g).join('   ')}</div>
+            <div class="game-right-tags">${game.genres.map(g => '#' + g).join('   ')}</div>
             <div style="margin-top:6px;font-size:0.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;font-weight:600;">Reviews</div>
             <div id="reviews-container">${reviewsHtml}</div>`;
 
-        const footer  = document.getElementById('game-footer');
-        const backBtn = document.createElement('button');
-        backBtn.className = 'btn btn-ghost'; backBtn.textContent = 'Back'; backBtn.onclick = openCatalog;
-        footer.appendChild(backBtn);
-
-        if (!isAdmin) {
-            const cartBtn = document.createElement('button');
-            cartBtn.className = 'btn btn-primary';
-            if (!currentUser) {
-                cartBtn.textContent = 'Add to Cart';
-                cartBtn.onclick = () => { showLoginModal(); showToast('Please log in to add games to your cart.'); };
-            } else {
-                const { inWishlist } = await API.get(`/api/wishlist/check?username=${encodeURIComponent(currentUser)}&gameId=${appID}`);
-                cartBtn.textContent = inWishlist ? 'In Cart' : 'Add to Cart';
-                if (inWishlist) cartBtn.disabled = true;
-                cartBtn.onclick = async () => {
-                    cartMirror[appID] = { image: game.imageURL, genre: game.genres[0] || '' };
-                    const { ok } = await API.post('/api/wishlist', {
-                        username: currentUser,
-                        gameId:   appID,
-                        gameTitle: gameName
-                    });
-                    showToast(ok ? `${gameName} added to cart!` : `${gameName} is already in your cart!`);
-                    cartBtn.textContent = 'In Cart';
-                    cartBtn.disabled = true;
-                    updateCartBadge();
-                };
-            }
-            footer.appendChild(cartBtn);
-
-            const reviewBtn = document.createElement('button');
-            reviewBtn.className = 'btn btn-ghost'; reviewBtn.textContent = 'Write Review';
-            if (!currentUser) {
-                reviewBtn.onclick = () => { showLoginModal(); showToast('Please log in to write a review.'); };
-            } else {
-                reviewBtn.onclick = () => showReviewModal(appID, gameName);
-            }
-            footer.appendChild(reviewBtn);
-        }
+        _buildGameFooter(appID, gameName, false);
     }
 
+    // open admin game
+    async function openDummyGame(game) {
+        showScreen('game-screen');
+        document.getElementById('game-title-bar').textContent = game.title;
+        _sliderIndex = 0;
+        window._currentGameAppID = game.id;
+        window._currentDummyGame = game;
+
+        document.getElementById('game-left').innerHTML =
+            '<div class="dummy-game-hero">No media available</div>';
+
+        const reviewsHtml = await buildReviewsHtml(game.id);
+        const price = (game.price || 0).toFixed(2);
+
+        document.getElementById('game-right').innerHTML = `
+            <div class="game-price-box">
+                <div>
+                    <div class="game-price-label">Price</div>
+                    <div class="game-price-value">$${price}</div>
+                </div>
+            </div>
+            <div class="game-right-desc">${escHtml(game.description || 'An admin-added title.')}</div>
+            <div class="game-right-tags">#${escHtml(game.genre || '')}</div>
+            <div style="margin-top:6px;font-size:0.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;font-weight:600;">Reviews</div>
+            <div id="reviews-container">${reviewsHtml}</div>`;
+
+        _buildGameFooter(game.id, game.title, true);
+    }
+
+    // build game footer
+    async function _buildGameFooter(gameId, gameTitle, isDummy) {
+        const footer = document.getElementById('game-footer');
+        footer.innerHTML = '';
+
+        const backBtn = document.createElement('button');
+        backBtn.className = 'btn btn-ghost';
+        backBtn.textContent = 'Back';
+        backBtn.onclick = openCatalog;
+        footer.appendChild(backBtn);
+
+        if (isAdmin) return;
+
+        const cartBtn = document.createElement('button');
+        cartBtn.className = 'btn btn-primary';
+        if (!currentUser) {
+            cartBtn.textContent = 'Add to Cart';
+            cartBtn.onclick = () => { showLoginModal(); showToast('Please log in to add games to your cart.'); };
+        } else {
+            const { inWishlist } = await API.get(`/api/wishlist/check?username=${encodeURIComponent(currentUser)}&gameId=${gameId}`);
+            cartBtn.textContent = inWishlist ? 'In Cart' : 'Add to Cart';
+            if (inWishlist) cartBtn.disabled = true;
+            cartBtn.onclick = async () => {
+                const { ok } = await API.post('/api/wishlist', {
+                    username: currentUser,
+                    gameId: gameId,
+                    gameTitle: gameTitle
+                });
+                showToast(ok ? `${gameTitle} added to cart!` : `${gameTitle} is already in your cart!`);
+                cartBtn.textContent = 'In Cart';
+                cartBtn.disabled = true;
+                updateCartBadge();
+            };
+        }
+        footer.appendChild(cartBtn);
+
+        const reviewBtn = document.createElement('button');
+        reviewBtn.className = 'btn btn-ghost';
+        reviewBtn.textContent = 'Write Review';
+        if (!currentUser) {
+            reviewBtn.onclick = () => { showLoginModal(); showToast('Please log in to write a review.'); };
+        } else {
+            reviewBtn.onclick = () => showReviewModal(gameId, gameTitle);
+        }
+        footer.appendChild(reviewBtn);
+    }
+
+    // show review form
     function showReviewModal(gameId, gameTitle) {
         openModal(`
             <h3>Review: ${escHtml(gameTitle)}</h3>
@@ -1058,6 +1809,7 @@
                 <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
                 <button class="btn btn-primary" onclick="doSubmitReview(${gameId}, '${String(gameTitle).replace(/'/g,"\\'")}')">Submit</button>
             </div>`);
+
         const stars = document.querySelectorAll('#star-picker .sp');
         stars.forEach(star => {
             star.addEventListener('mouseenter', () => {
@@ -1075,25 +1827,476 @@
         });
     }
 
+    // submit review post
     async function doSubmitReview(gameId, gameTitle) {
-        const rating  = document.getElementById('rv-rating').value;
+        const rating = document.getElementById('rv-rating').value;
         const comment = document.getElementById('rv-comment').value;
-        const { ok }  = await API.post('/api/reviews', {
+        if (!rating || rating === '0') { showToast('Please select a star rating.'); return; }
+        const { ok } = await API.post('/api/reviews', {
             gameId,
-            username:  currentUser,
+            username: currentUser,
             rating,
             comment,
             gameTitle
         });
         closeModal();
-        showToast(ok ? 'Review submitted! Waiting for admin approval.' : 'Failed — invalid rating or already reviewed.');
-        if (ok) updateNotifBadge();
+        showToast(ok ? 'Review submitted! Waiting for admin approval.' : 'You already reviewed this game.');
     }
+
+    // build reviews HTML
+    async function buildReviewsHtml(appID) {
+        const { result } = await API.get(`/api/reviews?gameId=${appID}`);
+        if (result === 'No reviews yet.') {
+            localRatingCache[appID] = 0; // ensure cache reflects "no reviews"
+            return '<div style="color:var(--muted);font-size:0.82rem;">No reviews yet.</div>';
+        }
+
+        const items = result.split('\n').filter(Boolean).map(line => {
+            const u = line.match(/User: ([^|]+)/);
+            const r = line.match(/Rating: (\d+)/);
+            const c = line.match(/Comment: (.*)/);
+            return {
+                user: u ? u[1].trim() : '?',
+                rating: r ? parseInt(r[1]) : 0,
+                comment: c ? c[1].trim() : ''
+            };
+        });
+
+        const avg = items.length ? items.reduce((s, r) => s + r.rating, 0) / items.length : 0;
+        const rounded = Math.round(avg);
+
+        localRatingCache[appID] = avg;
+        _updateCatalogCardRating(appID, avg);
+
+        let avgStars = '';
+        for (let i = 1; i <= 5; i++) avgStars += `<span class="${i <= rounded ? '' : 'dim'}">★</span>`;
+        const summaryHtml = `
+            <div style="display:flex;
+            align-items:center;
+            gap:10px;
+            padding:8px 0 4px;
+            border-bottom:1px solid var(--border);
+            margin-bottom:6px;
+            ">
+                <span class="review-stars" style="font-size:1rem;
+                ">${avgStars}</span>
+                <span style="font-size:0.85rem;font-weight:600;
+                ">${avg.toFixed(1)} / 5</span>
+                <span style="font-size:0.75rem;
+                color:var(--muted);
+                ">(${items.length} review${items.length !== 1 ? 's' : ''})</span>
+            </div>`;
+
+        return summaryHtml + '<div class="reviews-section">' + items.map(r => `
+            <div class="review-card">
+                <div class="review-card-header">
+                    <span class="review-card-user">${escHtml(r.user)}</span>
+                    ${starsHtml(r.rating)}
+                </div>
+                <div class="review-card-comment">${escHtml(r.comment)}</div>
+            </div>`).join('') + '</div>';
+    }
+
+    // update card rating
+    function _updateCatalogCardRating(appID, avg) {
+        const key = String(appID).startsWith('dummy') ? 'dummy_' + appID : String(appID);
+        const cards = document.querySelectorAll(`.game-card[data-app-id="${key}"], .game-card[data-app-id="${appID}"]`);
+        const rounded = Math.round(avg);
+        let stars = '';
+        for (let i = 1; i <= 5; i++) stars += `<span class="${i <= rounded ? '' : 'dim'}">★</span>`;
+        const label = avg > 0 ? `${avg.toFixed(1)} / 5` : 'No reviews yet';
+        cards.forEach(card => {
+            const starsEl = card.querySelector('.card-stars');
+            const labelEl = card.querySelector('.card-rating-label');
+            if (starsEl) starsEl.innerHTML = stars;
+            if (labelEl) labelEl.textContent = label;
+        });
+    }
+
+    // show add game modal
+    async function showAddGameModal() {
+        let genreOptions = '<option value="">— Select Genre —</option>';
+        try {
+            const { genres } = await API.get('/api/genres');
+            genreOptions += genres.map(g => `<option value="${escHtml(g)}">${escHtml(g)}</option>`).join('');
+        } catch {}
+
+        openModal(`
+            <h3>Add Game</h3>
+            <div><label>Title</label><input id="ag-title" placeholder="Game title"/></div>
+            <div>
+                <label>Genre</label>
+                <select id="ag-genre">${genreOptions}</select>
+            </div>
+            <div><label>Price ($)</label><input id="ag-price" type="number" step="0.01" min="0" placeholder="29.99"/></div>
+            <div class="modal-actions">
+                <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="doAddGame()">Add</button>
+            </div>`);
+    }
+
+    // add game submit
+    async function doAddGame() {
+        const title = document.getElementById('ag-title').value.trim();
+        const genre = document.getElementById('ag-genre').value;
+        const price = document.getElementById('ag-price').value || '0';
+
+        if (!title) { showToast('Please enter a game title.'); return; }
+        if (!genre) { showToast('Please select a genre.'); return; }
+
+        const { ok } = await API.post('/api/games', {
+            title,
+            genre,
+            platform: 'PC',
+            price,
+            description: '',
+            trailerUrl: ''
+        });
+        closeModal();
+        showToast(ok ? `"${title}" added to the catalog!` : 'Failed to add game.');
+        if (ok) buildGameGrid();
+    }
+
+    // show remove game
+    function showRemoveGameModal() {
+        openModal(`
+            <h3>Remove Game</h3>
+            <p class="modal-note">Only admin-added games can be removed. Enter the exact game title.</p>
+            <div><label>Game Title</label><input id="rm-name" placeholder="e.g. My Game"/></div>
+            <div class="modal-actions">
+                <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+                <button class="btn btn-danger" onclick="doRemoveGame()">Remove</button>
+            </div>`);
+    }
+
+    // remove game submit
+    async function doRemoveGame() {
+        const name = document.getElementById('rm-name').value.trim();
+        if (!name) { showToast('Please enter a game name.'); return; }
+
+        let games = [];
+        try { games = await API.get('/api/games'); } catch {}
+        if (!Array.isArray(games)) games = [];
+
+        const match = games.find(g => g.title.toLowerCase() === name.toLowerCase());
+        if (!match) {
+            closeModal();
+            showToast(`"${name}" not found.`);
+            return;
+        }
+
+        const { ok } = await API.delete(`/api/games/${match.id}`, {});
+        closeModal();
+        showToast(ok ? `"${name}" removed from catalog.` : 'Failed to remove game.');
+        if (ok) buildGameGrid();
+    }
+
+    // show genres modal
+    async function showGenresModal() {
+        const { genres, remainingSlots } = await API.get('/api/genres');
+        const list = genres.map((g, i) => `${i + 1}. ${g}`).join('\n');
+        openModal(`
+            <h3>Manage Genres</h3>
+            <div class="modal-pre">${escHtml(list || 'No genres yet.')}</div>
+            <div class="modal-note">Remaining slots: ${remainingSlots}</div>
+            <div><label>Add Genre</label><input id="genre-add-name" placeholder="New genre name"/></div>
+            <div><label>Remove Genre</label><input id="genre-rm-name" placeholder="Genre to remove"/></div>
+            <div class="modal-actions">
+                <button class="btn btn-ghost" onclick="closeModal()">Close</button>
+                <button class="btn btn-danger" onclick="doRemoveGenre()">Remove</button>
+                <button class="btn btn-primary" onclick="doAddGenre()">Add</button>
+            </div>`);
+    }
+
+    // add genre submit
+    async function doAddGenre() {
+        const name = document.getElementById('genre-add-name').value.trim();
+        const { ok } = await API.post('/api/genres', { name });
+        closeModal();
+        showToast(ok ? `Genre "${name}" added!` : 'Failed — duplicate, max reached, or blank.');
+        if (ok) { populateGenreFilter(); buildGameGrid(); }
+    }
+
+    // remove genre submit
+    async function doRemoveGenre() {
+        const name = document.getElementById('genre-rm-name').value.trim();
+        const { ok } = await API.delete('/api/genres', { name });
+        closeModal();
+        showToast(ok ? `Genre "${name}" removed!` : `Genre "${name}" not found.`);
+        if (ok) { populateGenreFilter(); buildGameGrid(); }
+    }
+
+    // show pending reviews
+    async function showPendingReviewsModal() {
+        const { result } = await API.get('/api/reviews/pending');
+        openModal(`
+            <h3>Pending Reviews</h3>
+            <div class="modal-pre">${escHtml(result)}</div>
+            <div><label>Review ID to Approve</label><input id="rev-approve-id" type="number"/></div>
+            <div><label>Review ID to Reject</label><input id="rev-reject-id" type="number"/></div>
+            <div class="modal-actions">
+                <button class="btn btn-ghost" onclick="closeModal()">Close</button>
+                <button class="btn btn-danger" onclick="doRejectReview()">Reject</button>
+                <button class="btn btn-primary" onclick="doApproveReview()">Approve</button>
+            </div>`);
+    }
+
+    // approve a review
+    async function doApproveReview() {
+        const reviewId = document.getElementById('rev-approve-id').value;
+        const { ok } = await API.post('/api/reviews/approve', { reviewId });
+        closeModal();
+        showToast(ok ? 'Review approved!' : 'Review not found.');
+        if (ok && window._currentGameAppID != null) {
+            // Refresh reviews panel on game detail page if open
+            const rc = document.getElementById('reviews-container');
+            if (rc) rc.innerHTML = await buildReviewsHtml(window._currentGameAppID);
+        }
+        updateNotifBadge();
+    }
+
+    // reject a review
+    async function doRejectReview() {
+        const reviewId = document.getElementById('rev-reject-id').value;
+        const { ok } = await API.post('/api/reviews/reject', { reviewId });
+        closeModal();
+        showToast(ok ? 'Review rejected.' : 'Review not found.');
+    }
+
+
+    // show notifications modal
+    async function showNotificationsModal() {
+        const { all } = await API.get('/api/notifications');
+        openModal(`
+            <h3>Notifications</h3>
+            <div class="modal-pre">${escHtml(all)}</div>
+            <div class="modal-actions">
+                <button class="btn btn-ghost" onclick="closeModal()">Close</button>
+                <button class="btn btn-primary" onclick="doMarkAllRead()">Mark All Read</button>
+            </div>`);
+        await API.post('/api/notifications/markAllRead', {});
+        updateNotifBadge();
+    }
+
+    // mark all read
+    async function doMarkAllRead() {
+        await API.post('/api/notifications/markAllRead', {});
+        closeModal();
+        updateNotifBadge();
+        showToast('All notifications marked as read.');
+    }
+
+    // update notif badge
+    async function updateNotifBadge() {
+        const badge = document.getElementById('notif-badge');
+        if (!badge) return;
+        try {
+            const { count } = await API.get('/api/notifications');
+            badge.textContent = count;
+            badge.className = 'notif-badge' + (count > 0 ? ' visible' : '');
+        } catch {}
+    }
+
+    // toggle profile menu
+    function toggleProfileDropdown(e) {
+        e.stopPropagation();
+        document.getElementById('profile-dropdown')?.classList.toggle('open');
+    }
+    // close on outside click
+    function closeProfileDropdownOutside(e) {
+        const wrap = document.getElementById('profile-icon-wrap');
+        if (wrap && !wrap.contains(e.target))
+            document.getElementById('profile-dropdown')?.classList.remove('open');
+    }
+    // open profile screen
+    function openProfileScreen() {
+        document.getElementById('profile-dropdown')?.classList.remove('open');
+        showScreen('profile-screen');
+        const initials = currentUser ? currentUser.slice(0, 2).toUpperCase() : '?';
+        document.getElementById('profile-body').innerHTML = `
+            <div class="profile-avatar">${initials}</div>
+            <div class="profile-username">${escHtml(currentUser || '')}</div>
+            <div class="profile-role">${isAdmin ? 'Administrator' : 'Member'}</div>`;
+    }
+
+    // update cart count
+    async function updateCartBadge() {
+        const badge = document.getElementById('cart-count-badge');
+        if (!badge || !currentUser) return;
+        try {
+            const raw = await API.get(`/api/wishlist?username=${encodeURIComponent(currentUser)}`);
+            const lines = raw.result.split('\n').filter(l => l.trim() && l !== 'Wishlist is empty.');
+            const count = lines.length;
+            if (count > 0) { badge.textContent = count;
+            badge.style.display = 'flex';
+          }
+            else badge.style.display = 'none';
+        } catch {}
+    }
+
+    // open cart screen
+    async function openCartScreen() {
+        showScreen('cart-screen');
+        const body = document.getElementById('cart-body');
+        body.innerHTML = '';
+
+        const { result } = await API.get(`/api/wishlist?username=${encodeURIComponent(currentUser)}`);
+        if (result === 'Wishlist is empty.' || !result.trim()) {
+            body.innerHTML = '<div class="cart-empty">Your cart is empty.</div>';
+            refreshCartTotal([]);
+            return;
+        }
+
+        const items = result.split('\n').filter(Boolean).map(line => {
+            const idMatch = line.match(/Game ID: (\d+)/);
+            const titleMatch = line.match(/Title: (.+)/);
+            return {
+                id: idMatch ? parseInt(idMatch[1]) : 0,
+                title: titleMatch ? titleMatch[1].trim() : '?'
+            };
+        });
+
+        items.forEach(item => {
+            const price = getItemPrice(item.id);
+            const div = document.createElement('div');
+            div.className = 'cart-item';
+            div.innerHTML = `
+                <div class="cart-item-info">
+                    <div class="cart-item-title">${escHtml(item.title)}</div>
+                </div>
+                <div style="font-family:'Rajdhani',sans-serif;
+                font-size:1.2rem;
+                font-weight:700;
+                margin-right:10px;
+                white-space:nowrap;
+                ">$${price.toFixed(2)}</div>
+                <button class="cart-item-remove" onclick="removeCartItem(${item.id}, this)">Remove</button>`;
+            body.appendChild(div);
+        });
+        refreshCartTotal(items);
+    }
+
+    // refresh cart total
+    function refreshCartTotal(items) {
+        const total = items.reduce((s, it) => s + getItemPrice(it.id), 0);
+        const totalRow = document.getElementById('cart-total-row');
+        const totalVal = document.getElementById('cart-total-value');
+        const buyBtn = document.getElementById('cart-buy-btn');
+        if (items.length > 0) {
+            if (totalRow) totalRow.style.display = 'flex';
+            if (totalVal) totalVal.textContent = '$' + total.toFixed(2);
+            if (buyBtn) buyBtn.style.display = 'inline-flex';
+        } else {
+            if (totalRow) totalRow.style.display = 'none';
+            if (buyBtn) buyBtn.style.display = 'none';
+        }
+    }
+
+    // remove cart item
+    async function removeCartItem(gameId, btn) {
+        await API.delete('/api/wishlist', {
+            username: currentUser, gameId
+          });
+        btn.closest('.cart-item').remove();
+        await updateCartBadge();
+        const body = document.getElementById('cart-body');
+        const remaining = body.querySelectorAll('.cart-item');
+        if (!remaining.length) {
+            body.innerHTML = '<div class="cart-empty">Your cart is empty.</div>';
+            refreshCartTotal([]);
+        } else {
+            refreshCartTotal([...remaining].map(el => {
+                const b = el.querySelector('.cart-item-remove');
+                const id = b ? parseInt(b.getAttribute('onclick').match(/\d+/)[0]) : 0;
+                return { id };
+            }));
+        }
+    }
+
+    // clear all cart
+    async function clearCart() {
+        await API.post('/api/wishlist/clear', { username: currentUser });
+        await updateCartBadge();
+        document.getElementById('cart-body').innerHTML = '<div class="cart-empty">Your cart is empty.</div>';
+        refreshCartTotal([]);
+    }
+
+    // build media slider
+    function buildMediaSlider(game) {
+        const slides = [];
+        if (game.movies && game.movies.length > 0) {
+            const movie = game.movies[0];
+            const hlsUrl = movie.hls_h264 || null;
+            let directUrl = null;
+            if (!hlsUrl) {
+                if (movie.mp4) directUrl = (typeof movie.mp4 === 'string') ? movie.mp4 : (movie.mp4['max'] || movie.mp4['480'] || null);
+                if (!directUrl && movie.webm) directUrl = (typeof movie.webm === 'string') ? movie.webm : (movie.webm['max'] || movie.webm['480'] || null);
+                if (!directUrl && movie.url) directUrl = movie.url;
+            }
+            if (hlsUrl) slides.push('<div class="media-slide"><video id="game-trailer" controls muted playsinline preload="auto"></video></div>');
+            else if (directUrl) slides.push(`<div class="media-slide"><video id="game-trailer" controls autoplay muted playsinline preload="auto" src="${directUrl}"></video></div>`);
+        }
+        if (game.screenshots) {
+            for (let i = 0; i < Math.min(8, game.screenshots.length); i++) {
+                const sc = game.screenshots[i];
+                if (sc?.path_full) slides.push(`<div class="media-slide"><img src="${sc.path_full}" loading="lazy"/></div>`);
+            }
+        }
+        if (!slides.length) return '<div style="color:gray;padding:40px;text-align:center;">No media available</div>';
+        let dots = '';
+        slides.forEach((_, i) => dots += `<div class="slider-dot${i === 0 ? ' active' : ''}" onclick="sliderGo(${i})"></div>`);
+        return `<div class="media-slider-wrap">
+            <button class="slider-btn prev" onclick="sliderPrev()">&#8249;</button>
+            <div class="media-slider" id="media-slider">${slides.join('')}</div>
+            <button class="slider-btn next" onclick="sliderNext()">&#8250;</button>
+            <div class="slider-dots" id="slider-dots">${dots}</div>
+        </div>`;
+    }
+
+    // update dot indicators
+    function updateDots() {
+        document.querySelectorAll('#slider-dots .slider-dot').forEach((d, i) => d.classList.toggle('active', i === _sliderIndex));
+    }
+    // go to slide index
+    function sliderGo(i) {
+        const slider = document.getElementById('media-slider');
+        if (!slider) return;
+        _sliderIndex = Math.max(0, Math.min(i, slider.children.length - 1));
+        slider.scrollTo({ left: _sliderIndex * slider.clientWidth, behavior: 'smooth' });
+        updateDots();
+    }
+    // go to prev slide
+    function sliderPrev() { sliderGo(_sliderIndex - 1); }
+    // go to next slide
+    function sliderNext() { sliderGo(_sliderIndex + 1); }
+
+    // attach HLS trailer
+    function attachTrailer(hlsUrl) {
+        const vid = document.getElementById('game-trailer');
+        if (!vid || !hlsUrl) return;
+        if (Hls.isSupported()) {
+            const hls = new Hls();
+            hls.loadSource(hlsUrl);
+            hls.attachMedia(vid);
+            hls.on(Hls.Events.MANIFEST_PARSED, () => vid.play().catch(() => {}));
+        } else if (vid.canPlayType('application/vnd.apple.mpegurl')) {
+            vid.src = hlsUrl;
+            vid.play().catch(() => {});
+        }
+    }
+
+    // toggle support popup
+    function toggleSupportPopup(e) {
+        e.stopPropagation();
+        document.getElementById('support-popup').classList.toggle('support-hidden');
+    }
+    document.addEventListener('click', () => {
+        document.getElementById('support-popup')?.classList.add('support-hidden');
+    });
 
     (async () => {
         await syncSession();
-        buildHeaderRight();
-        buildGameGrid();
+        openCatalog();
     })();
 </script>
 </body>
